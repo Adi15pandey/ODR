@@ -43,6 +43,7 @@ dev_dependencies:
   google_fonts: any
   fl_chart: any
   http: any
+  shared_preferences: any
 
 
   # The "flutter_lints" package below contains a set of recommended lints to

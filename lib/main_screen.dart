@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:odr_sandhee/LogoutScreen.dart';
 import 'package:odr_sandhee/arbitrator.dart';
 import 'package:odr_sandhee/tickets.dart';
 
@@ -13,7 +14,7 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  Widget _currentScreen = DashboardScreen(); // Default to DashboardScreen
+  Widget _currentScreen = DashboardScreen();
 
   @override
   Widget build(BuildContext context) {
@@ -115,7 +116,9 @@ class _MainScreenState extends State<MainScreen> {
                 icon: Icons.logout,
                 text: 'Logout',
                 onTap: () {
-                  Navigator.pop(context);
+                  Navigator.push(context, MaterialPageRoute(builder: (context)=>LogoutScreen()));
+                  
+                  // Navigator.pop(context);
                 },
               ),
             ],

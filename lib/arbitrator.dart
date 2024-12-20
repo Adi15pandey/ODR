@@ -9,25 +9,49 @@ class ArbitratorScreen extends StatefulWidget {
 }
 
 class _ArbitratorScreenState extends State<ArbitratorScreen> {
-  late Future<List<dynamic>> arbitrators;
+  late Future<List<dynamic>> arbitrators; // Future for loading arbitrators
+  List<dynamic> arbitratorsData = []; // Full list of arbitrators (for filtering)
+  List<dynamic> filteredArbitrators = []; // List to hold filtered arbitrators
+  TextEditingController _searchController = TextEditingController(); // Controller for search input
 
   @override
   void initState() {
     super.initState();
     arbitrators = fetchArbitrators();
+    _searchController.addListener(_filterArbitrators); // Add listener to filter arbitrators when typing
   }
 
+  // Fetch the list of arbitrators from API
   Future<List<dynamic>> fetchArbitrators() async {
     final response = await http.get(Uri.parse('https://odr.sandhee.com/api/arbitrator/all'));
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
-      return List.from(data['user']);
+      final arbitratorsData = List.from(data['user']); // Extract arbitrators
+      setState(() {
+        this.arbitratorsData = arbitratorsData; // Save full list
+        filteredArbitrators = arbitratorsData; // Initialize filtered list with the full list
+      });
+      return arbitratorsData;
     } else {
       throw Exception('Failed to load arbitrators');
     }
   }
 
+
+  void _filterArbitrators() {
+    final query = _searchController.text.toLowerCase();
+    setState(() {
+      filteredArbitrators = arbitratorsData.where((arbitrator) {
+        final name = arbitrator['name']?.toLowerCase() ?? '';
+        final email = arbitrator['emailId']?.toLowerCase() ?? '';
+        final contact = arbitrator['contactNo']?.toLowerCase() ?? '';
+        return name.contains(query) || email.contains(query) || contact.contains(query);
+      }).toList();
+    });
+  }
+
+  // Show details of the selected arbitrator
   void _showDetails(BuildContext context, dynamic arbitrator) {
     showDialog(
       context: context,
@@ -60,7 +84,6 @@ class _ArbitratorScreenState extends State<ArbitratorScreen> {
                 _buildDetailRow('Contact No:', arbitrator['contactNo']),
                 _buildDetailRow('Arbitrator Number:', arbitrator['uid']),
                 _buildDetailRow('Address:', arbitrator['address']),
-                _buildDetailRow('Assigned Cases:', arbitrator['noOfAssignCase'].toString()),
                 _buildDetailRow('Expertise:', arbitrator['areaOfExperties']),
                 _buildDetailRow('About:', arbitrator['about']),
                 SizedBox(height: 20),
@@ -111,85 +134,101 @@ class _ArbitratorScreenState extends State<ArbitratorScreen> {
       appBar: AppBar(
         title: Text('Arbitrators', style: GoogleFonts.poppins()),
       ),
-      body: FutureBuilder<List<dynamic>>(
-        future: arbitrators,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return Center(child: Text('No arbitrators found'));
-          } else {
-            final arbitratorsData = snapshot.data!;
-            return ListView.builder(
-              itemCount: arbitratorsData.length,
-              itemBuilder: (context, index) {
-                final arbitrator = arbitratorsData[index];
-                return Card(
-                  margin: EdgeInsets.symmetric(vertical: 10, horizontal: 15),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                  elevation: 12,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [Colors.blue.shade300, Colors.purple.shade300],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    padding: EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Arbitrator: ${arbitrator['name'] ?? 'No name'}',
-                          style: GoogleFonts.poppins(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                        SizedBox(height: 10),
-                        Row(
-                          children: [
-                            Icon(Icons.work, size: 22, color: Colors.white70),
-                            SizedBox(width: 8),
-                            Text(
-                              'Experience: ${arbitrator['experienceInYears']} years',
-                              style: GoogleFonts.lato(fontSize: 16, color: Colors.white),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                labelText: 'Search Arbitrators',
+                prefixIcon: Icon(Icons.search),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+            ),
+          ),
+          Expanded(
+            child: FutureBuilder<List<dynamic>>(
+              future: arbitrators,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Center(child: CircularProgressIndicator());
+                } else if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                } else if (!snapshot.hasData || filteredArbitrators.isEmpty) {
+                  return Center(child: Text('No arbitrators found'));
+                } else {
+                  return ListView.builder(
+                    itemCount: filteredArbitrators.length,
+                    itemBuilder: (context, index) {
+                      final arbitrator = filteredArbitrators[index];
+                      return Card(
+                        margin: EdgeInsets.symmetric(vertical: 10, horizontal: 15),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                        elevation: 12,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [Colors.blue.shade300, Colors.purple.shade300],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
                             ),
-                          ],
-                        ),
-                        SizedBox(height: 10),
-                        Row(
-                          children: [
-                            Icon(Icons.account_circle, size: 22, color: Colors.white70),
-                            SizedBox(width: 8),
-                            TextButton(
-                              onPressed: () {
-                                _showDetails(context, arbitrator);
-                              },
-                              child: Text(
-                                'Details',
-                                style: GoogleFonts.lato(
-                                  color: Colors.orangeAccent,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w500,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          padding: EdgeInsets.all(16.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Arbitrator: ${arbitrator['name'] ?? 'No name'}',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
                                 ),
                               ),
-                            ),
-                          ],
+                              SizedBox(height: 10),
+                              Row(
+                                children: [
+                                  Icon(Icons.work, size: 22, color: Colors.white70),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    'Experience: ${arbitrator['experienceInYears']} years',
+                                    style: GoogleFonts.lato(fontSize: 16, color: Colors.white),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 10),
+                              Row(
+                                children: [
+                                  Icon(Icons.account_circle, size: 22, color: Colors.white70),
+                                  SizedBox(width: 8),
+                                  TextButton(
+                                    onPressed: () {
+                                      _showDetails(context, arbitrator);
+                                    },
+                                    child: Text(
+                                      'Details',
+                                      style: GoogleFonts.lato(
+                                        color: Colors.orangeAccent,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
-                      ],
-                    ),
-                  ),
-                );
+                      );
+                    },
+                  );
+                }
               },
-            );
-          }
-        },
+            ),
+          ),
+        ],
       ),
     );
   }

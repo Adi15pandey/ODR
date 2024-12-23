@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:odr_sandhee/arbitrator.dart';
+import 'package:odr_sandhee/arbitratorclient.dart';
 
 class DashboardScreen extends StatefulWidget {
   @override

@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:odr_sandhee/arbitrator_main_screen.dart';
 import 'package:odr_sandhee/respondend_main_screen.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:odr_sandhee/main_screen.dart';
+import 'package:odr_sandhee/client_main_screen.dart';
 import 'package:odr_sandhee/forgot_password.dart';
 import 'package:odr_sandhee/register.dart';
 
@@ -13,13 +14,12 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  String userType = ' ';
+  String userType = ' '; // Default userType set to 'Client'
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _accountNumberController = TextEditingController();
   final TextEditingController _otpController = TextEditingController();
-  final TextEditingController _mobileNumberController = TextEditingController();
   bool _passwordVisible = false;
   bool _otpVisible = false;
 
@@ -27,9 +27,10 @@ class _LoginScreenState extends State<LoginScreen> {
     if (userType == 'Client') {
       await _clientLogin();
     } else if (userType == 'Respondent') {
-
       String dynamicaccountnumber = _accountNumberController.text;
       await _respondentLogin(dynamicaccountnumber);
+    } else if (userType == 'Arbitrator') {
+      await _arbitratorLogin();
     }
   }
 
@@ -50,11 +51,16 @@ class _LoginScreenState extends State<LoginScreen> {
       var responseBody = await response.stream.bytesToString();
       var responseData = json.decode(responseBody);
 
-      if (responseData.containsKey('token')) {
+      if (responseData.containsKey('token') && responseData.containsKey('role')) {
         await _saveToken(responseData['token']);
-        Navigator.push(context, MaterialPageRoute(builder: (context) => MainScreen()));
+
+        if (responseData['role'] == 'client') {
+          Navigator.push(context, MaterialPageRoute(builder: (context) => ClientMainScreen()));
+        } else {
+          _showErrorDialog('Invalid role');
+        }
       } else {
-        _showErrorDialog('Token not found in response');
+        _showErrorDialog('Invalid response structure');
       }
     } else {
       _showErrorDialog(response.reasonPhrase ?? 'Login failed');
@@ -65,47 +71,27 @@ class _LoginScreenState extends State<LoginScreen> {
     String accountNumberUrl = 'https://odr.sandhee.com/api/cases/casewithaccountnumber/$dynamicaccountnumber';
     var headers = {'Content-Type': 'application/json'};
 
-
     var request = http.Request('GET', Uri.parse(accountNumberUrl));
     request.headers.addAll(headers);
     http.StreamedResponse response = await request.send();
 
-    // Check if the account request was successful
     if (response.statusCode == 200) {
-      // Convert the response body to a string
       String responseBody = await response.stream.bytesToString();
-      // Parse the JSON response
       var data = json.decode(responseBody);
-
-      // Extract the relevant data (respondentMobile and accountNumber)
       String mobile = data['caseData']['respondentMobile'];
       String accountNumber = data['caseData']['accountNumber'];
+      _sendOtp(mobile, accountNumber);
 
-      // Print the mobile and account number
-      print("Respondent Mobile: $mobile");
-      print("Account Number: $accountNumber");
-
-      // Now, you can call the _sendOtp() method with the mobile number
-      _sendOtp(mobile, accountNumber); // Assuming _sendOtp() method is updated to take mobile number as a parameter
-
-      // Log the response body (optional for debugging)
-      print(responseBody);
-
-      // Show OTP dialog if account fetch is successful
       setState(() {
         _otpVisible = true;
       });
       _showOtpDialog();
     } else {
-      // Handle failure if the account fetch fails
-      print(response.reasonPhrase);  // Log the error
       _showErrorDialog('Invalid account number');
     }
   }
 
-
-
-  Future<void> _sendOtp(String mobile , String accountNo) async {
+  Future<void> _sendOtp(String mobile, String accountNo) async {
     String otpUrl = 'https://odr.sandhee.com/api/auth/respondentotp';
     var headers = {'Content-Type': 'application/json'};
 
@@ -118,20 +104,12 @@ class _LoginScreenState extends State<LoginScreen> {
     request.headers.addAll(headers);
     http.StreamedResponse response = await request.send();
 
-
-    String responseBody = await response.stream.bytesToString();
-    print("Response Status: ${response.statusCode}");
-    print("Response Body: $responseBody");
-
     if (response.statusCode == 201) {
-      print("OTP Sent Successfully0000000000000000000000000000000000");
-
+      print("OTP Sent Successfully");
     } else {
-      print("Error: ${response.reasonPhrase}");
-      // _showErrorDialog('Failed to send OTP: ${response.reasonPhrase}');
+      _showErrorDialog('Failed to send OTP: ${response.reasonPhrase}');
     }
   }
-
 
   Future<void> _verifyOtp() async {
     String otpVerifyUrl = 'https://odr.sandhee.com/api/auth/respondentlogin';
@@ -145,13 +123,8 @@ class _LoginScreenState extends State<LoginScreen> {
     request.headers.addAll(headers);
     http.StreamedResponse response = await request.send();
 
-    String responseBody = await response.stream.bytesToString();
-    print("OTP Verification Response Status: ${response.statusCode}");
-    print("OTP Verification Response Body: $responseBody");
-
     if (response.statusCode == 200) {
-      var responseData = json.decode(responseBody);
-print("888888y8uy8uy");
+      var responseData = json.decode(await response.stream.bytesToString());
       if (responseData.containsKey('token')) {
         await _saveToken(responseData['token']);
         Navigator.push(context, MaterialPageRoute(builder: (context) => RespondendMainScreen()));
@@ -163,11 +136,59 @@ print("888888y8uy8uy");
     }
   }
 
+  Future<void> _arbitratorLogin() async {
+    String url = 'https://odr.sandhee.com/api/auth/login';
+    var headers = {'Content-Type': 'application/json'};
+    var request = http.Request('POST', Uri.parse(url));
+    request.body = json.encode({
+      "emailId": _emailController.text,
+      "password": _passwordController.text
+    });
+
+    request.headers.addAll(headers);
+
+    http.StreamedResponse response = await request.send();
+
+    if (response.statusCode == 200) {
+      var responseBody = await response.stream.bytesToString();
+      var responseData = json.decode(responseBody);
+
+      if (responseData.containsKey('token') && responseData.containsKey('role')) {
+        await _saveToken(responseData['token']);  // Save the token
+
+        if (responseData['role'] == 'arbitrator') {
+          Navigator.push(context, MaterialPageRoute(builder: (context) => ArbitratorMainScreen()));
+        } else {
+          _showErrorDialog('Invalid role');
+        }
+      } else {
+        _showErrorDialog('Invalid response structure');
+      }
+    } else {
+      _showErrorDialog(response.reasonPhrase ?? 'Login failed');
+    }
+  }
+
 
   Future<void> _saveToken(String token) async {
     final prefs = await SharedPreferences.getInstance();
+
+
     await prefs.setString('auth_token', token);
+
+    await prefs.reload();
+
+
+    String? savedToken = prefs.getString('auth_token');
+
+    if (savedToken != null && savedToken.isNotEmpty) {
+      print("Token saved successfully: $savedToken");
+    } else {
+      print("Token saving failed");
+    }
   }
+
+
 
   void _showErrorDialog(String message) {
     showDialog(
@@ -217,7 +238,6 @@ print("888888y8uy8uy");
             TextButton(
               onPressed: () async {
                 Navigator.of(context).pop();
-
                 await _verifyOtp();
               },
               child: Text('Submit'),
@@ -273,9 +293,17 @@ print("888888y8uy8uy");
                           ),
                           SizedBox(height: 20),
                           Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               _buildRadioButton('Client'),
                               _buildRadioButton('Respondent'),
+                            ],
+                          ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              _buildRadioButton('Admin'),
+                              _buildRadioButton('Arbitrator'),
                             ],
                           ),
                           SizedBox(height: 20),
@@ -304,13 +332,10 @@ print("888888y8uy8uy");
                                 if (value == null || value.isEmpty) {
                                   return 'Please enter your email';
                                 }
-                                if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
-                                  return 'Please enter a valid email';
-                                }
                                 return null;
                               },
                             ),
-                            SizedBox(height: 20),
+                            SizedBox(height: 10),
                             TextFormField(
                               controller: _passwordController,
                               obscureText: !_passwordVisible,
@@ -319,7 +344,9 @@ print("888888y8uy8uy");
                                 border: OutlineInputBorder(),
                                 suffixIcon: IconButton(
                                   icon: Icon(
-                                    _passwordVisible ? Icons.visibility : Icons.visibility_off,
+                                    _passwordVisible
+                                        ? Icons.visibility
+                                        : Icons.visibility_off,
                                   ),
                                   onPressed: () {
                                     setState(() {
@@ -335,43 +362,50 @@ print("888888y8uy8uy");
                                 return null;
                               },
                             ),
-                            SizedBox(height: 10),
-                            Align(
-                              alignment: Alignment.centerRight,
-                              child: TextButton(
-                                onPressed: () {
-                                  Navigator.push(context, MaterialPageRoute(builder: (context) => ForgotPassword()));
-                                },
-                                child: Text('Forgot Password?'),
-                              ),
-                            ),
                           ],
                           SizedBox(height: 20),
-                          SizedBox(
-                            width: double.infinity,
+                          Center(
                             child: ElevatedButton(
-                              onPressed: () {
+                              onPressed: () async {
                                 if (_formKey.currentState!.validate()) {
-                                  _login();
+                                  await _login();
                                 }
                               },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.blue[900],
-                              ),
                               child: Text('Login'),
                             ),
                           ),
-                          SizedBox(height: 10),
+                          SizedBox(height: 20),
                           Center(
-                            child: Text('or'),
-                          ),
-                          SizedBox(height: 10),
-                          Center(
-                            child: TextButton(
-                              onPressed: () {
-                                Navigator.push(context, MaterialPageRoute(builder: (context) => RegisterScreen()));
+                            child: InkWell(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (context) => ForgotPassword()),
+                                );
                               },
-                              child: Text('Register here'),
+                              child: Text(
+                                'Forgot Password?',
+                                style: TextStyle(
+                                  color: Colors.blue,
+                                ),
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: 20),
+                          Center(
+                            child: InkWell(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (context) => RegisterScreen()),
+                                );
+                              },
+                              child: Text(
+                                'Don\'t have an account? Register',
+                                style: TextStyle(
+                                  color: Colors.blue,
+                                ),
+                              ),
                             ),
                           ),
                         ],
@@ -387,27 +421,20 @@ print("888888y8uy8uy");
     );
   }
 
-  Widget _buildRadioButton(String title) {
-    return Flexible(
-      child: ListTile(
-        contentPadding: EdgeInsets.zero,
-        title: Text(
-          title,
-          style: TextStyle(fontSize: 14),
+  Widget _buildRadioButton(String type) {
+    return Row(
+      children: [
+        Radio<String>(
+          value: type,
+          groupValue: userType,
+          onChanged: (value) {
+            setState(() {
+              userType = value!;
+            });
+          },
         ),
-        leading: SizedBox(
-          width: 24,
-          child: Radio<String>(
-            value: title,
-            groupValue: userType,
-            onChanged: (value) {
-              setState(() {
-                userType = value!;
-              });
-            },
-          ),
-        ),
-      ),
+        Text(type),
+      ],
     );
   }
 }

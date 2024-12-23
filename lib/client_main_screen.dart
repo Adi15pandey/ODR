@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:odr_sandhee/LogoutScreen.dart';
-import 'package:odr_sandhee/arbitrator.dart';
+import 'package:odr_sandhee/arbitratorclient.dart';
 import 'package:odr_sandhee/tickets.dart';
 
 import 'dashboard_screen.dart'; // Import the DashboardScreen
 
-class MainScreen extends StatefulWidget {
-  const MainScreen({super.key});
+class ClientMainScreen extends StatefulWidget {
+  const ClientMainScreen({super.key});
 
   @override
-  State<MainScreen> createState() => _MainScreenState();
+  State<ClientMainScreen> createState() => _ClientMainScreenState();
 }
 
-class _MainScreenState extends State<MainScreen> {
+class _ClientMainScreenState extends State<ClientMainScreen> {
   Widget _currentScreen = DashboardScreen();
 
   @override

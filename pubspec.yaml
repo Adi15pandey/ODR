@@ -41,9 +41,11 @@ dev_dependencies:
     sdk: flutter
   path_provider: ^2.1.5
   google_fonts: any
-  fl_chart: any
+  fl_chart: ^0.68.0
   http: any
   shared_preferences: any
+  url_launcher: any
+  font_awesome_flutter: any
 
 
   # The "flutter_lints" package below contains a set of recommended lints to

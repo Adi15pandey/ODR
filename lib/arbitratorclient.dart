@@ -9,19 +9,18 @@ class ArbitratorScreen extends StatefulWidget {
 }
 
 class _ArbitratorScreenState extends State<ArbitratorScreen> {
-  late Future<List<dynamic>> arbitrators; // Future for loading arbitrators
-  List<dynamic> arbitratorsData = []; // Full list of arbitrators (for filtering)
-  List<dynamic> filteredArbitrators = []; // List to hold filtered arbitrators
-  TextEditingController _searchController = TextEditingController(); // Controller for search input
-
+  late Future<List<dynamic>> arbitrators;
+  List<dynamic> arbitratorsData = [];
+  List<dynamic> filteredArbitrators = [];
+  TextEditingController _searchController = TextEditingController();
   @override
   void initState() {
     super.initState();
     arbitrators = fetchArbitrators();
-    _searchController.addListener(_filterArbitrators); // Add listener to filter arbitrators when typing
+    _searchController.addListener(_filterArbitrators);
   }
 
-  // Fetch the list of arbitrators from API
+
   Future<List<dynamic>> fetchArbitrators() async {
     final response = await http.get(Uri.parse('https://odr.sandhee.com/api/arbitrator/all'));
 
@@ -51,7 +50,8 @@ class _ArbitratorScreenState extends State<ArbitratorScreen> {
     });
   }
 
-  // Show details of the selected arbitrator
+
+
   void _showDetails(BuildContext context, dynamic arbitrator) {
     showDialog(
       context: context,

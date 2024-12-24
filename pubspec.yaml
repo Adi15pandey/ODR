@@ -46,6 +46,11 @@ dev_dependencies:
   shared_preferences: any
   url_launcher: any
   font_awesome_flutter: any
+  file_picker: any
+  mime: any
+  open_file: any
+  dio: any
+
 
 
   # The "flutter_lints" package below contains a set of recommended lints to

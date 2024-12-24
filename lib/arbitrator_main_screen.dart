@@ -311,7 +311,7 @@ class _ArbitratorMainScreenState extends State<ArbitratorMainScreen> {
           ? Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.all(16.0), // Add padding around the content
+          padding: const EdgeInsets.all(16.0),
           child: Column(
             children: [
               Row(

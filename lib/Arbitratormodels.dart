@@ -100,18 +100,41 @@ class Case {
           .map((meeting) => Meeting.fromJson(meeting))
           .toList()
           : json['meetings'] is String
-          ? [] // Handle the case where 'meetings' is a String
+          ? []
           : [],
 
       awards: json['awards'] is List
-          ? (json['awards'] as List)
-          .map((award) => award is Map<String, dynamic>
-          ? Award.fromJson(award)
-          : Award(id: '', caseId: '', arbitratorId: '', title: '', description: '', createdAt: DateTime.now(), updatedAt: DateTime.now())) // Handle the case where award is a string
-          .toList()
+          ? (json['awards'] as List).map((award) {
+        if (award is Map<String, dynamic>) {
+          return Award.fromJson(award); // Handle as a Map and parse it
+        } else if (award is String) {
+          // Handle the case where the award is a string
+          return Award(
+            id: '',
+            caseId: '',
+            arbitratorId: '',
+            title: award, // Treat the string as the title (or modify if it should be something else)
+            description: '',
+            createdAt: DateTime.now(),
+            updatedAt: DateTime.now(),
+          );
+        } else {
+
+          return Award(
+            id: '',
+            caseId: '',
+            arbitratorId: '',
+            title: '',
+            description: '',
+            createdAt: DateTime.now(),
+            updatedAt: DateTime.now(),
+          );
+        }
+      }).toList()
           : json['awards'] is String
-          ? [] // Handle the case where 'awards' is just a string
-          : [],
+          ? [] // If 'awards' is just a string, return an empty list
+          : [], // If 'awards' is neither a List nor String, return an empty list
+
       arbitratorId: json['arbitratorId'] ?? '',
       arbitratorName: json['arbitratorName'] ?? '',
       arbitratorEmail: json['arbitratorEmail'] ?? '',
@@ -330,6 +353,7 @@ class Award {
   final DateTime createdAt;
   final DateTime updatedAt;
 
+  // Constructor
   Award({
     required this.id,
     required this.caseId,
@@ -340,19 +364,42 @@ class Award {
     required this.updatedAt,
   });
 
+  // Factory method for JSON deserialization
   factory Award.fromJson(Map<String, dynamic> json) {
     return Award(
-      id: json['_id'] ?? '',  // Ensure non-null string
-      caseId: json['caseId'] ?? '',  // Ensure non-null string
-      arbitratorId: json['arbitratorId'] ?? '',  // Ensure non-null string
-      title: json['title'] ?? '',  // Ensure non-null string
-      description: json['description'] ?? '',  // Ensure non-null string
-      createdAt: json['createdAt'] != null
-          ? DateTime.tryParse(json['createdAt'] ?? '') ?? DateTime.now()
-          : DateTime.now(),  // Safe parsing of DateTime
-      updatedAt: json['updatedAt'] != null
-          ? DateTime.tryParse(json['updatedAt'] ?? '') ?? DateTime.now()
-          : DateTime.now(),  // Safe parsing of DateTime
+      id: json['_id'] ?? '', // Default to empty string if null
+      caseId: json['caseId'] ?? '', // Default to empty string if null
+      arbitratorId: json['arbitratorId'] ?? '', // Default to empty string if null
+      title: json['title'] ?? '', // Default to empty string if null
+      description: json['description'] ?? '', // Default to empty string if null
+      createdAt: _parseDateTime(json['createdAt']), // Safe date parsing
+      updatedAt: _parseDateTime(json['updatedAt']), // Safe date parsing
     );
   }
+
+  // Helper method for safe DateTime parsing
+  static DateTime _parseDateTime(String? dateTime) {
+    if (dateTime == null) return DateTime.now(); // Fallback to current time
+    return DateTime.tryParse(dateTime) ?? DateTime.now(); // Safe parsing
+  }
+
+  // Method to convert Award to JSON (if needed)
+  Map<String, dynamic> toJson() {
+    return {
+      '_id': id,
+      'caseId': caseId,
+      'arbitratorId': arbitratorId,
+      'title': title,
+      'description': description,
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt.toIso8601String(),
+    };
+  }
+
+  // Override toString for better debug information
+  @override
+  String toString() {
+    return 'Award(id: $id, caseId: $caseId, arbitratorId: $arbitratorId, title: $title, description: $description, createdAt: $createdAt, updatedAt: $updatedAt)';
+  }
 }
+

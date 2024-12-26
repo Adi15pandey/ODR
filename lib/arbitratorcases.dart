@@ -440,7 +440,7 @@ class _ArbitratorcasesState extends State<Arbitratorcases> {
             ),
             IconButton(
               icon: Icon(Icons.done, color: Colors.green),
-              onPressed: () => handleAllMeetingCompleted(caseData.caseId),
+              onPressed: () => handleAllMeetingCompleted(context,caseData.id),
             ),
           ],
         );
@@ -461,7 +461,7 @@ class _ArbitratorcasesState extends State<Arbitratorcases> {
             ),
             IconButton(
               icon: Icon(Icons.done, color: Colors.green),
-              onPressed: () => handleAllMeetingCompleted(caseData.caseId),
+              onPressed: () => handleAllMeetingCompleted(context,caseData.id),
             ),
           ],
         );
@@ -478,9 +478,93 @@ class _ArbitratorcasesState extends State<Arbitratorcases> {
 
   }
 
-  void handleAllMeetingCompleted(String id) {
+  Future<void> handleAllMeetingCompleted(BuildContext context, String caseId) async {
+    // print("caseId: $caseId");
+    // Validate the caseId format
+    var url = Uri.parse('https://odr.sandhee.com/api/cases/uploadordersheet');
 
+
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('auth_token');
+
+    if (token == null) {
+      print("No token found. Please login again.");
+      return;
+    }
+    if (!isValidObjectId(caseId)) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Invalid caseId format')));
+      return;
+    }
+
+    // Show the confirmation dialog
+    bool? result = await showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Are you sure?'),
+          content: Text('Do you want to end the meeting forever?'),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(false); // No
+              },
+              child: Text('No'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(true); // Yes
+              },
+              child: Text('Yes'),
+            ),
+          ],
+        );
+      },
+    );
+    if (result == true) {
+      try {
+        var headers = {
+
+          'token': '$token',
+          'Content-Type': 'application/json',
+        };
+
+        var request = http.Request('PUT', Uri.parse('https://odr.sandhee.com/api/cases/updatemeetstatus'));
+
+        // Send the valid caseId to the API
+        request.body = json.encode({
+          "id": caseId,
+        });
+        request.headers.addAll(headers);
+
+        http.StreamedResponse response = await request.send();
+
+        if (response.statusCode == 200) {
+          // Correctly handle the response body
+          String responseBody = await response.stream.bytesToString();
+          print(responseBody);
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Meeting ended successfully')));
+        } else {
+          // Handle failure
+          print('Error Response: ${response.statusCode} ${await response.stream.bytesToString()}');
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to update meet status')));
+        }
+      } catch (e) {
+        // Handle any errors
+        print('Error: $e');
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+      }
+    }
   }
+
+// Helper function to validate MongoDB ObjectId
+  bool isValidObjectId(String id) {
+    final objectIdRegExp = RegExp(r'^[0-9a-fA-F]{24}$');
+    return objectIdRegExp.hasMatch(id);
+  }
+
+
+
+
 
   void generateOrderSheet(String id)  {
     showDialog(
@@ -488,7 +572,7 @@ class _ArbitratorcasesState extends State<Arbitratorcases> {
       builder: (context) {
         return AlertDialog(
           title: Text(
-            "Upload Award PDF",
+            "Generate Ordersheet.",
             style: TextStyle(
               fontWeight: FontWeight.bold,
               color: Colors.blueAccent,
@@ -637,13 +721,7 @@ class _ArbitratorcasesState extends State<Arbitratorcases> {
       },
     );
   }
-  Future<void> _launchURL(String url) async {
-    if (await canLaunch(url)) {
-      await launch(url);
-    } else {
-      throw 'Could not launch $url';
-    }
-  }
+
   Future<void> uploadAwardFile(File file, String id) async {
 
     var url = Uri.parse('https://odr.sandhee.com/api/cases/uploadawards');
@@ -658,7 +736,7 @@ class _ArbitratorcasesState extends State<Arbitratorcases> {
     }
 
     var headers = {
-      'bearer': '$token', // Use Bearer token for the Authorization header
+      'token': '$token',
     };
 
     if (!file.path.endsWith('.pdf')) {

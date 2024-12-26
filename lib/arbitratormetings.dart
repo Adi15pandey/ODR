@@ -270,7 +270,7 @@ class _ArbitratormetingsState extends State<Arbitratormetings> {
                   fontWeight: FontWeight.bold,
                   fontSize: 24,
                 ),
-                overflow: TextOverflow.ellipsis, // Handles text overflow
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],

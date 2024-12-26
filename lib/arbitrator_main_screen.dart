@@ -325,6 +325,7 @@ class _ArbitratorMainScreenState extends State<ArbitratorMainScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   _buildCountCard('Arbitrations', arbitrations),
+
                   _buildCountCard('Unique Clients', uniqueClients),
                 ],
               ),
@@ -332,10 +333,29 @@ class _ArbitratorMainScreenState extends State<ArbitratorMainScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  _buildCountCard('Total Cases', totalCases),
-                  _buildCountCard('Awards', awards),
+                  GestureDetector(
+                    onTap: () {
+                      // Navigate to the Total Cases screen when the title is tapped
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => Arbitratorcases()),
+                      );
+                    },
+                    child: _buildCountCard('Total Cases', totalCases),
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      // Navigate to the Awards screen when the title is tapped
+                      // Navigator.push(
+                      //   context,
+                      //   MaterialPageRoute(builder: (context) => AwardsScreen()),
+                      // );
+                    },
+                    child: _buildCountCard('Awards', awards),
+                  ),
                 ],
               ),
+
               const SizedBox(height: 20),
               _buildChart(),
               const SizedBox(height: 20),

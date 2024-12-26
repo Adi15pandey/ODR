@@ -15,11 +15,25 @@ class LogoutScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          'Logout',
-          style: GoogleFonts.poppins(),
+        backgroundColor: Colors.blue[800],
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            Image.asset(
+              'assets/Images/Group.png',
+              height: 30,
+            ),
+            SizedBox(width: 10),
+            Text(
+              'Logout',
+              style: GoogleFonts.poppins(
+                fontWeight: FontWeight.bold,
+                fontSize: 24,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
         ),
-        backgroundColor: Colors.blue,
       ),
       body: Center(
         child: Padding(

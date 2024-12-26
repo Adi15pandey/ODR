@@ -98,12 +98,10 @@ class _TicketsScreenState extends State<TicketsScreen> {
   Future<void> _handleAddNewTicket() async {
     var headers = {
       'token': '$token',
-
       'Content-Type': 'application/json',
     };
 
     if (_ticketId == null || _ticketId!.isEmpty) {
-      _showSnackBar('Ticket ID is required.');
       return;
     }
     if (_nameController.text.isEmpty) {
@@ -135,8 +133,6 @@ class _TicketsScreenState extends State<TicketsScreen> {
       'category': _categoryController.text,
       'query': _queryController.text,
     };
-
-    // Print the form data for debugging purposes
     print('Form Data: $formData');
 
     var request = http.Request('POST', Uri.parse('https://odr.sandhee.com/api/tickets/new-ticket'));
@@ -151,7 +147,6 @@ class _TicketsScreenState extends State<TicketsScreen> {
         print('Response body: ${responseBody.body}');
         _showSnackBar('Ticket raised successfully!');
 
-        // Clear the form fields
         setState(() {
           _nameController.clear();
           _contactController.clear();
@@ -159,8 +154,6 @@ class _TicketsScreenState extends State<TicketsScreen> {
           _categoryController.clear();
           _queryController.clear();
         });
-
-        // Fetch new ticket ID after raising a ticket
         _fetchTicketData();
       } else {
         print('Error response status: ${response.statusCode}');
@@ -246,7 +239,7 @@ class _TicketsScreenState extends State<TicketsScreen> {
               SizedBox(height: 16.0),
               _buildTextField(
                 controller: _queryController,
-                label: 'Query',
+                label: ' Enter a Query',
                 maxLines: 6,
               ),
               SizedBox(height: 24.0),

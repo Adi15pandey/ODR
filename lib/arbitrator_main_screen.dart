@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:odr_sandhee/LogoutScreen.dart';
+import 'package:odr_sandhee/arbitrator_Document.dart';
 import 'package:odr_sandhee/arbitratorcases.dart';
+import 'package:odr_sandhee/arbitratormetings.dart';
 import 'package:odr_sandhee/dashboard_screen.dart';
 import 'package:odr_sandhee/tickets.dart';
 import 'dart:convert';
@@ -276,14 +278,19 @@ class _ArbitratorMainScreenState extends State<ArbitratorMainScreen> {
                 icon: Icons.meeting_room_sharp,
                 text: 'Meetings',
                 onTap: () {
-                  Navigator.pop(context);
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => Arbitratormetings()));
+
+
+                  // Navigator.pop(context);
                 },
               ),
               _buildDrawerItem(
                 icon: Icons.file_copy_sharp,
                 text: 'Documents',
                 onTap: () {
-                  Navigator.pop(context);
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => ArbitratorDocument()));
+
+                  // Navigator.pop(context);
                 },
               ),
               _buildDrawerItem(
@@ -733,7 +740,6 @@ class _ArbitratorMainScreenState extends State<ArbitratorMainScreen> {
 
               InkWell(
                 onTap: () {
-
                   launch(meeting['webLink']);
                 },
                 child: Container(

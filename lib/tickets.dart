@@ -1,4 +1,8 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class TicketsScreen extends StatefulWidget {
   const TicketsScreen({super.key});
@@ -16,21 +20,68 @@ class _TicketsScreenState extends State<TicketsScreen> {
   final _categoryController = TextEditingController();
 
   String? _ticketId;
-  String? _userName;
+  String?token;
+  Color _ticketColor = Colors.black;
 
   @override
   void initState() {
     super.initState();
-    _fetchTicketData();
+    _fetchToken();
+  }
+  Future<void> _fetchToken() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+
+    await prefs.reload();
+
+    String? savedToken = prefs.getString('auth_token');
+
+    if (savedToken != null && savedToken.isNotEmpty) {
+      setState(() {
+        token = savedToken;
+      });
+      print('Token fetched: $token');
+     _fetchTicketData();
+     _handleAddNewTicket();
+    } else {
+      print('Token not found');
+    }
+  }
+  Future<void> _fetchTicketData() async {
+    try {
+      final response = await http.get(
+        Uri.parse('https://odr.sandhee.com/api/tickets/new-ticketId'),
+        headers: {
+          'token': '$token',
+          'Content-Type': 'application/json'
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        setState(() {
+          _ticketId = responseData['ticketId'];
+          _ticketColor = Colors.green; // Change color to green on success
+        });
+      } else {
+        setState(() {
+          _ticketColor = Colors.red; // Change color to red on failure
+        });
+        _showSnackBar('Failed to fetch Ticket ID');
+      }
+    } catch (e) {
+      setState(() {
+        _ticketColor = Colors.red; // Change color to red on error
+      });
+      _showSnackBar('Error: $e');
+    }
   }
 
-  Future<void> _fetchTicketData() async {
-
-    await Future.delayed(Duration(seconds: 2));
-    setState(() {
-      _ticketId = '';
-      _userName = 'Aditya pandey';
-    });
+  // Show a snack bar for messages
+  void _showSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
   }
 
   @override
@@ -43,13 +94,85 @@ class _TicketsScreenState extends State<TicketsScreen> {
     super.dispose();
   }
 
-  void _raiseTicket() {
-    if (_formKey.currentState!.validate()) {
-      // Handle form submission
-      print('Ticket Raised');
-      // You can handle the form submission here, e.g., send the data to the backend
+
+  Future<void> _handleAddNewTicket() async {
+    var headers = {
+      'token': '$token',
+
+      'Content-Type': 'application/json',
+    };
+
+    if (_ticketId == null || _ticketId!.isEmpty) {
+      _showSnackBar('Ticket ID is required.');
+      return;
+    }
+    if (_nameController.text.isEmpty) {
+      _showSnackBar('Name is required.');
+      return;
+    }
+    if (_contactController.text.isEmpty) {
+      _showSnackBar('Contact Number is required.');
+      return;
+    }
+    if (_emailController.text.isEmpty) {
+      _showSnackBar('Email is required.');
+      return;
+    }
+    if (_categoryController.text.isEmpty) {
+      _showSnackBar('Category is required.');
+      return;
+    }
+    if (_queryController.text.isEmpty) {
+      _showSnackBar('Query is required.');
+      return;
+    }
+
+    var formData = {
+      'ticketId': _ticketId,
+      'name': _nameController.text,
+      'contactNumber': _contactController.text,
+      'email': _emailController.text,
+      'category': _categoryController.text,
+      'query': _queryController.text,
+    };
+
+    // Print the form data for debugging purposes
+    print('Form Data: $formData');
+
+    var request = http.Request('POST', Uri.parse('https://odr.sandhee.com/api/tickets/new-ticket'));
+    request.headers.addAll(headers);
+    request.body = json.encode(formData);
+
+    try {
+      http.StreamedResponse response = await request.send();
+      final responseBody = await http.Response.fromStream(response);
+
+      if (response.statusCode == 200) {
+        print('Response body: ${responseBody.body}');
+        _showSnackBar('Ticket raised successfully!');
+
+        // Clear the form fields
+        setState(() {
+          _nameController.clear();
+          _contactController.clear();
+          _emailController.clear();
+          _categoryController.clear();
+          _queryController.clear();
+        });
+
+        // Fetch new ticket ID after raising a ticket
+        _fetchTicketData();
+      } else {
+        print('Error response status: ${response.statusCode}');
+        print('Error response body: ${responseBody.body}');
+        _showSnackBar('Failed to raise ticket. Please try again.');
+      }
+    } catch (e) {
+      print('Error: $e');
+      _showSnackBar('Error: $e');
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -57,7 +180,24 @@ class _TicketsScreenState extends State<TicketsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Raise a Ticket'),
+        backgroundColor: Colors.blue[800],
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            Image.asset(
+              'assets/Images/Group.png',
+              height: 30,
+            ),
+            SizedBox(width: 10),
+            Text(
+              'Raise Ticket',
+              style: GoogleFonts.poppins(
+                fontWeight: FontWeight.bold,
+                fontSize: 24,
+              ),
+            ),
+          ],
+        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -66,7 +206,7 @@ class _TicketsScreenState extends State<TicketsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (_ticketId != null && _userName != null)
+              if (_ticketId != null)
                 Center(
                   child: Column(
                     children: [
@@ -75,16 +215,10 @@ class _TicketsScreenState extends State<TicketsScreen> {
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w600,
+                          color: _ticketColor,
                         ),
                       ),
                       SizedBox(height: 8.0),
-                      Text(
-                        'Name: $_userName',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
                     ],
                   ),
                 ),
@@ -118,15 +252,17 @@ class _TicketsScreenState extends State<TicketsScreen> {
               SizedBox(height: 24.0),
               Center(
                 child: ElevatedButton(
-                  onPressed: _raiseTicket,
+                  onPressed: _handleAddNewTicket,
                   style: ElevatedButton.styleFrom(
-                    padding: EdgeInsets.symmetric(
+                    foregroundColor: Colors.white, backgroundColor: Colors.deepPurple, padding: EdgeInsets.symmetric(
                       vertical: 14.0,
                       horizontal: screenWidth * 0.2,
                     ),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10.0),
-                    ),
+                      borderRadius: BorderRadius.circular(12.0), // Adjust border radius for a rounded effect
+                    ), // Text color
+                    elevation: 5, // Adding shadow for a raised effect
+                    shadowColor: Colors.purple.withOpacity(0.4), // Shadow color for elevation
                     textStyle: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -134,7 +270,8 @@ class _TicketsScreenState extends State<TicketsScreen> {
                   ),
                   child: Text('Raise Ticket'),
                 ),
-              ),
+              )
+
             ],
           ),
         ),

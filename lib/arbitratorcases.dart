@@ -130,7 +130,7 @@ class _ArbitratorcasesState extends State<Arbitratorcases> {
           title: Text(
             'Case Details',
             style: TextStyle(
-              fontSize: 24, // Larger title font size for emphasis
+              fontSize: 24,
               fontWeight: FontWeight.w700, // Bold weight
               color: Colors.white,
               letterSpacing: 1.2,
@@ -475,15 +475,89 @@ class _ArbitratorcasesState extends State<Arbitratorcases> {
   }
 
   void handleMeeting(Meeting meeting) {
-    // Your logic for handling the meeting
+
   }
 
   void handleAllMeetingCompleted(String id) {
-    // Your logic for marking all meetings as completed
+
   }
 
-  void generateOrderSheet(String id) {
+  void generateOrderSheet(String id)  {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(
+            "Upload Award PDF",
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.blueAccent,
+            ),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ElevatedButton.icon(
+                onPressed: () async {
+                  FilePickerResult? result = await FilePicker.platform.pickFiles(
+                    type: FileType.custom,
+                    allowedExtensions: ['pdf'],
+                  );
 
+                  if (result != null) {
+                    File file = File(result.files.single.path!);
+                    await uploadOrdersheet(file, id);
+                    Navigator.of(context).pop(); // Close the dialog after upload
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text("File uploaded successfully!"),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  } else {
+                    // User canceled the picker
+                    print("No file selected.");
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text("No file selected."),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                },
+                icon: Icon(Icons.attach_file),
+                label: Text("Choose PDF File"),
+                style: ElevatedButton.styleFrom(
+                  foregroundColor: Colors.white, backgroundColor: Colors.blueAccent,
+                  textStyle: TextStyle(fontWeight: FontWeight.bold),
+                  padding: EdgeInsets.symmetric(vertical: 12.0, horizontal: 20.0),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10.0),
+                  ),
+                ),
+              ),
+              SizedBox(height: 20),
+              Text(
+                "Please choose a PDF file to upload.",
+                style: TextStyle(color: Colors.grey),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(
+                "Cancel",
+                style: TextStyle(color: Colors.redAccent),
+              ),
+            ),
+          ],
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15.0),
+          ),
+        );
+      },
+    );
   }
 
   void generateAwardFunc(String id ) {
@@ -570,7 +644,6 @@ class _ArbitratorcasesState extends State<Arbitratorcases> {
       throw 'Could not launch $url';
     }
   }
-
   Future<void> uploadAwardFile(File file, String id) async {
 
     var url = Uri.parse('https://odr.sandhee.com/api/cases/uploadawards');
@@ -623,6 +696,59 @@ class _ArbitratorcasesState extends State<Arbitratorcases> {
     } catch (e) {
       print("Error occurred: $e");
     }
+  }
+}
+Future<void> uploadOrdersheet(File file, String id) async {
+
+  var url = Uri.parse('https://odr.sandhee.com/api/cases/uploadordersheet');
+
+
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  String? token = prefs.getString('auth_token');
+
+  if (token == null) {
+    print("No token found. Please login again.");
+    return;
+  }
+
+  var headers = {
+    'bearer': '$token', // Use Bearer token for the Authorization header
+  };
+
+  if (!file.path.endsWith('.pdf')) {
+    print("Invalid file type. Only PDF files are allowed.");
+    return;
+  }
+
+  // 4. Create the request
+  var request = http.MultipartRequest('POST', url)
+    ..headers.addAll(headers)
+    ..fields['caseId'] = id
+    ..files.add(await http.MultipartFile.fromPath(
+      'file',
+      file.path,
+      contentType: MediaType('application', 'pdf'),
+    ));
+
+  print("Request URL: $url");
+  print("Headers: $headers");
+  print("Fields: ${request.fields}");
+  print("File Path: ${file.path}");
+
+
+  try {
+    http.StreamedResponse response = await request.send();
+
+    if (response.statusCode == 200) {
+      print("File uploaded successfully.");
+      String responseBody = await response.stream.bytesToString();
+      print(responseBody);
+    } else {
+      print("Failed to upload file. Status code: ${response.statusCode}");
+      print(response.reasonPhrase);
+    }
+  } catch (e) {
+    print("Error occurred: $e");
   }
 }
   void showCaseDetail(BuildContext context, Case caseDetail) {

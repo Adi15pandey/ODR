@@ -50,6 +50,7 @@ dev_dependencies:
   mime: any
   open_file: any
   dio: any
+  intl: any
 
 
 

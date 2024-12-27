@@ -14,14 +14,18 @@ class Arbitratormetings extends StatefulWidget {
 
 class _ArbitratormetingsState extends State<Arbitratormetings> {
   List<dynamic> recentMeetingData = [];
+  List<dynamic> filteredMeetings = [];
   String? token;
+  TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _fetchToken();
+    _searchController.addListener(_filterMeetings); // Listen to search input
   }
 
+  // Fetch token from shared preferences
   Future<void> _fetchToken() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.reload();
@@ -39,12 +43,10 @@ class _ArbitratormetingsState extends State<Arbitratormetings> {
     }
   }
 
-
+  // Fetch recent meeting data from API
   Future<void> _fetchMeetingData() async {
     final url = 'https://odr.sandhee.com/api/webex/all-meetings/arbitrator';
-    final headers = {
-      'token': '$token',
-    };
+    final headers = {'token': '$token'};
 
     try {
       var response = await http.get(Uri.parse(url), headers: headers);
@@ -55,6 +57,7 @@ class _ArbitratormetingsState extends State<Arbitratormetings> {
 
         setState(() {
           recentMeetingData = data['data'];
+          filteredMeetings = recentMeetingData; // Show all meetings initially
         });
       } else {
         _showErrorDialog('Failed to fetch recent meeting data. Status code: ${response.statusCode}');
@@ -63,6 +66,21 @@ class _ArbitratormetingsState extends State<Arbitratormetings> {
       print('Error fetching recent meeting data: $e');
       _showErrorDialog('An error occurred: $e');
     }
+  }
+
+  // Filter meetings based on search input
+  void _filterMeetings() {
+    String query = _searchController.text.toLowerCase();
+    setState(() {
+      filteredMeetings = recentMeetingData
+          .where((meeting) =>
+      meeting['caseId'].toLowerCase().contains(query) || // Search by Case ID
+          meeting['clientName'].toLowerCase().contains(query) || // Search by Client Name
+          meeting['arbitratorName'].toLowerCase().contains(query)
+          ||  meeting['respondentName'].toLowerCase().contains(query))
+      // Search by Arbitrator Name
+          .toList();
+    });
   }
 
   // Method to show an error dialog
@@ -83,8 +101,22 @@ class _ArbitratormetingsState extends State<Arbitratormetings> {
       ),
     );
   }
+
+  // Check if the meeting time is over or not
+  String _getMeetingStatus(String endTime) {
+    DateTime meetingEndTime = DateTime.parse(endTime).toLocal();
+    DateTime currentTime = DateTime.now();
+
+    if (currentTime.isAfter(meetingEndTime)) {
+      return "Time's Over"; // The meeting time has passed
+    } else {
+      return "Start the Meeting"; // The meeting has not started yet
+    }
+  }
+
+  // Build the list of recent meetings
   Widget _buildRecentMeetingList() {
-    if (recentMeetingData.isEmpty) {
+    if (filteredMeetings.isEmpty) {
       return const Center(
         child: Text(
           'No recent meetings available',
@@ -95,7 +127,7 @@ class _ArbitratormetingsState extends State<Arbitratormetings> {
 
     return Padding(
       padding: const EdgeInsets.all(8.0),
-      child: SingleChildScrollView( // Wrap the entire Column in a SingleChildScrollView
+      child: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -115,9 +147,9 @@ class _ArbitratormetingsState extends State<Arbitratormetings> {
             ListView.builder(
               shrinkWrap: true,  // Ensures it takes up only as much space as needed
               physics: NeverScrollableScrollPhysics(), // Disable scrolling here since the parent is already scrollable
-              itemCount: recentMeetingData.length,
+              itemCount: filteredMeetings.length,
               itemBuilder: (context, index) {
-                return _buildMeetingCard(recentMeetingData[index]);
+                return _buildMeetingCard(filteredMeetings[index]);
               },
             ),
           ],
@@ -126,10 +158,7 @@ class _ArbitratormetingsState extends State<Arbitratormetings> {
     );
   }
 
-
-
-
-
+  // Build individual meeting card
   Widget _buildMeetingCard(var meeting) {
     String meetingDate = meeting['meetings']['start'] != null
         ? DateTime.parse(meeting['meetings']['start']).toLocal().toString().split(' ')[0]
@@ -139,6 +168,9 @@ class _ArbitratormetingsState extends State<Arbitratormetings> {
         : 'No Time';
 
     String respondentName = meeting['respondentName'] ?? 'No Respondent';
+    String endTime = meeting['meetings']['end'] ?? DateTime.now().toString(); // Get the end time
+
+    String meetingStatus = _getMeetingStatus(endTime); // Get the meeting status
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10.0),
@@ -216,9 +248,24 @@ class _ArbitratormetingsState extends State<Arbitratormetings> {
                 ],
               ),
               const SizedBox(height: 15),
+
+              // Display Meeting Status
+              Text(
+                meetingStatus,
+                style: TextStyle(
+                  color: meetingStatus == "Time's Over" ? Colors.red : Colors.green,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+
+              const SizedBox(height: 15),
+
               InkWell(
                 onTap: () {
-                  launch(meeting['meetings']['webLink']);
+                  if (meetingStatus == "Start the Meeting") {
+                    launch(meeting['meetings']['webLink']);
+                  }
                 },
                 child: Container(
                   padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 15),
@@ -249,6 +296,12 @@ class _ArbitratormetingsState extends State<Arbitratormetings> {
     );
   }
 
+  // Dispose of the controller
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -258,10 +311,7 @@ class _ArbitratormetingsState extends State<Arbitratormetings> {
         title: Row(
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
-            Image.asset(
-              'assets/Images/Group.png',
-              height: 30,
-            ),
+            Image.asset('assets/Images/Group.png', height: 30),
             SizedBox(width: 10),
             Expanded(
               child: Text(
@@ -276,8 +326,25 @@ class _ArbitratormetingsState extends State<Arbitratormetings> {
           ],
         ),
       ),
-
-      body: _buildRecentMeetingList(),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: 'Search by Case ID, Client, Respondent, or Arbitrator...',
+                prefixIcon: Icon(Icons.search),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(color: Colors.blue, width: 1),
+                ),
+              ),
+            ),
+          ),
+          Expanded(child: _buildRecentMeetingList()),
+        ],
+      ),
     );
   }
 }

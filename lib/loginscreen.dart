@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:odr_sandhee/Admin_main_screen.dart';
 import 'package:odr_sandhee/arbitrator_main_screen.dart';
 import 'package:odr_sandhee/respondend_main_screen.dart';
 import 'dart:convert';
@@ -7,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:odr_sandhee/client_main_screen.dart';
 import 'package:odr_sandhee/forgot_password.dart';
 import 'package:odr_sandhee/register.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -31,6 +33,8 @@ class _LoginScreenState extends State<LoginScreen> {
       await _respondentLogin(dynamicaccountnumber);
     } else if (userType == 'Arbitrator') {
       await _arbitratorLogin();
+    } else if (userType == 'Admin') {
+      await _adminLogin();
     }
   }
 
@@ -57,7 +61,7 @@ class _LoginScreenState extends State<LoginScreen> {
         if (responseData['role'] == 'client') {
           Navigator.push(context, MaterialPageRoute(builder: (context) => ClientMainScreen()));
         } else {
-          _showErrorDialog('Invalid role');
+          _showErrorDialog('Invalid Credentials');
         }
       } else {
         _showErrorDialog('Invalid response structure');
@@ -158,8 +162,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
         if (responseData['role'] == 'arbitrator') {
           Navigator.push(context, MaterialPageRoute(builder: (context) => ArbitratorMainScreen()));
-        } else {
-          _showErrorDialog('Invalid role');
+        }
+        else {
+          _showErrorDialog('Invalid Credential');
         }
       } else {
         _showErrorDialog('Invalid response structure');
@@ -168,6 +173,40 @@ class _LoginScreenState extends State<LoginScreen> {
       _showErrorDialog(response.reasonPhrase ?? 'Login failed');
     }
   }
+  Future<void> _adminLogin() async {
+    String url = 'https://odr.sandhee.com/api/auth/login';
+    var headers = {'Content-Type': 'application/json'};
+    var request = http.Request('POST', Uri.parse(url));
+    request.body = json.encode({
+      "emailId": _emailController.text,
+      "password": _passwordController.text
+    });
+
+    request.headers.addAll(headers);
+
+    http.StreamedResponse response = await request.send();
+
+    if (response.statusCode == 200) {
+      var responseBody = await response.stream.bytesToString();
+      var responseData = json.decode(responseBody);
+
+      if (responseData.containsKey('token') && responseData.containsKey('role')) {
+        await _saveToken(responseData['token']);  // Save the token
+
+        if (responseData['role'] == 'admin') {
+          Navigator.push(context, MaterialPageRoute(builder: (context) => AdminMainScreen()));
+        }
+        else {
+          _showErrorDialog('Invalid Credentials');
+        }
+      } else {
+        _showErrorDialog('Invalid response structure');
+      }
+    } else {
+      _showErrorDialog(response.reasonPhrase ?? 'Login failed');
+    }
+  }
+
 
 
   Future<void> _saveToken(String token) async {
@@ -195,20 +234,48 @@ class _LoginScreenState extends State<LoginScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Error'),
-          content: Text(message),
+          backgroundColor: Colors.white, // Set background color to white for the dialog
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15.0), // Rounded corners for the dialog
+          ),
+          title: Text(
+            'Error',
+            style: TextStyle(
+              color: Colors.redAccent, // Color the title text in red
+              fontSize: 20,
+              fontWeight: FontWeight.bold, // Make the title bold
+            ),
+          ),
+          content: Padding(
+            padding: const EdgeInsets.only(top: 10.0), // Add top padding for the content
+            child: Text(
+              message,
+              style: TextStyle(
+                color: Colors.black87, // Dark color for the content
+                fontSize: 16,
+              ),
+            ),
+          ),
           actions: <Widget>[
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: Text('OK'),
+              child: Text(
+                'OK',
+                style: TextStyle(
+                  color: Colors.blue, // Blue color for the button text
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500, // Make the button text slightly bold
+                ),
+              ),
             ),
           ],
         );
       },
     );
   }
+
 
   void _showOtpDialog() {
     showDialog(
@@ -248,6 +315,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+
   @override
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
@@ -274,9 +342,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   SizedBox(height: 20),
                   Card(
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(15),
                     ),
-                    elevation: 5,
+                    elevation: 8,
                     child: Padding(
                       padding: EdgeInsets.all(20),
                       child: Column(
@@ -288,6 +356,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               style: TextStyle(
                                 fontSize: screenWidth > 600 ? 24 : 20,
                                 fontWeight: FontWeight.bold,
+                                color: Colors.blue[800],
                               ),
                             ),
                           ),
@@ -295,15 +364,15 @@ class _LoginScreenState extends State<LoginScreen> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              _buildRadioButton('Client'),
-                              _buildRadioButton('Respondent'),
+                              _buildRadioButton('Client', Colors.blue, GoogleFonts.lato()), // Blue color and Lato font for Client
+                              _buildRadioButton('Respondent', Colors.green, GoogleFonts.roboto()), // Green color and Roboto font for Respondent
                             ],
                           ),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              _buildRadioButton('Admin'),
-                              _buildRadioButton('Arbitrator'),
+                              _buildRadioButton('Admin', Colors.orange, GoogleFonts.openSans()), // Orange color and Open Sans font for Admin
+                              _buildRadioButton('Arbitrator', Colors.purple, GoogleFonts.poppins()), // Purple color and Poppins font for Arbitrator
                             ],
                           ),
                           SizedBox(height: 20),
@@ -313,6 +382,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               decoration: InputDecoration(
                                 labelText: 'Account Number',
                                 border: OutlineInputBorder(),
+                                prefixIcon: Icon(Icons.account_circle),
                               ),
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
@@ -327,6 +397,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               decoration: InputDecoration(
                                 labelText: 'Email',
                                 border: OutlineInputBorder(),
+                                prefixIcon: Icon(Icons.email),
                               ),
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
@@ -342,6 +413,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               decoration: InputDecoration(
                                 labelText: 'Password',
                                 border: OutlineInputBorder(),
+                                prefixIcon: Icon(Icons.lock),
                                 suffixIcon: IconButton(
                                   icon: Icon(
                                     _passwordVisible
@@ -372,21 +444,27 @@ class _LoginScreenState extends State<LoginScreen> {
                                 }
                               },
                               child: Text('Login'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.blue[700],
+                                padding: EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(30),
+                                ),
+                                textStyle: TextStyle(fontSize: 18),
+                              ),
                             ),
                           ),
                           SizedBox(height: 20),
                           Center(
                             child: InkWell(
                               onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(builder: (context) => ForgotPassword()),
-                                );
+                                Navigator.push(context, MaterialPageRoute(builder: (context)=>ForgotPassword()));
                               },
                               child: Text(
                                 'Forgot Password?',
                                 style: TextStyle(
-                                  color: Colors.blue,
+                                  color: Colors.blue[700],
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
                             ),
@@ -395,15 +473,14 @@ class _LoginScreenState extends State<LoginScreen> {
                           Center(
                             child: InkWell(
                               onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(builder: (context) => RegisterScreen()),
-                                );
+                                Navigator.push(context, MaterialPageRoute(builder: (context)=>RegisterScreen()));
+                                // Navigate to Register screen
                               },
                               child: Text(
                                 'Don\'t have an account? Register',
                                 style: TextStyle(
-                                  color: Colors.blue,
+                                  color: Colors.blue[700],
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
                             ),
@@ -420,12 +497,11 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
   }
-
-  Widget _buildRadioButton(String type) {
+  Widget _buildRadioButton(String label, Color color, TextStyle fontStyle) {
     return Row(
       children: [
         Radio<String>(
-          value: type,
+          value: label,
           groupValue: userType,
           onChanged: (value) {
             setState(() {
@@ -433,7 +509,7 @@ class _LoginScreenState extends State<LoginScreen> {
             });
           },
         ),
-        Text(type),
+        Text(label),
       ],
     );
   }

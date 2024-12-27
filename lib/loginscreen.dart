@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:odr_sandhee/Admin_main_screen.dart';
 import 'package:odr_sandhee/arbitrator_main_screen.dart';
 import 'package:odr_sandhee/respondend_main_screen.dart';
 import 'dart:convert';
@@ -31,6 +32,8 @@ class _LoginScreenState extends State<LoginScreen> {
       await _respondentLogin(dynamicaccountnumber);
     } else if (userType == 'Arbitrator') {
       await _arbitratorLogin();
+    } else if (userType == 'Admin') {
+      await _adminLogin();
     }
   }
 
@@ -158,7 +161,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
         if (responseData['role'] == 'arbitrator') {
           Navigator.push(context, MaterialPageRoute(builder: (context) => ArbitratorMainScreen()));
-        } else {
+        }
+        else {
           _showErrorDialog('Invalid role');
         }
       } else {
@@ -168,6 +172,40 @@ class _LoginScreenState extends State<LoginScreen> {
       _showErrorDialog(response.reasonPhrase ?? 'Login failed');
     }
   }
+  Future<void> _adminLogin() async {
+    String url = 'https://odr.sandhee.com/api/auth/login';
+    var headers = {'Content-Type': 'application/json'};
+    var request = http.Request('POST', Uri.parse(url));
+    request.body = json.encode({
+      "emailId": _emailController.text,
+      "password": _passwordController.text
+    });
+
+    request.headers.addAll(headers);
+
+    http.StreamedResponse response = await request.send();
+
+    if (response.statusCode == 200) {
+      var responseBody = await response.stream.bytesToString();
+      var responseData = json.decode(responseBody);
+
+      if (responseData.containsKey('token') && responseData.containsKey('role')) {
+        await _saveToken(responseData['token']);  // Save the token
+
+        if (responseData['role'] == 'admin') {
+          Navigator.push(context, MaterialPageRoute(builder: (context) => AdminMainScreen()));
+        }
+        else {
+          _showErrorDialog('Invalid role');
+        }
+      } else {
+        _showErrorDialog('Invalid response structure');
+      }
+    } else {
+      _showErrorDialog(response.reasonPhrase ?? 'Login failed');
+    }
+  }
+
 
 
   Future<void> _saveToken(String token) async {
@@ -247,6 +285,7 @@ class _LoginScreenState extends State<LoginScreen> {
       },
     );
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -420,7 +459,6 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
   }
-
   Widget _buildRadioButton(String type) {
     return Row(
       children: [

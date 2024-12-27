@@ -11,6 +11,7 @@ import 'package:http_parser/http_parser.dart';
 import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:intl/intl.dart';
 
 
 
@@ -231,35 +232,6 @@ class _ArbitratorcasesState extends State<Arbitratorcases> {
 
 
 // Helper method to create each info bar
-  Widget _buildInfoRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        decoration: BoxDecoration(
-          color: Colors.grey[200],
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.grey[400]!),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: <Widget>[
-            Text(
-              '$label:',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
-              ),
-            ),
-            Text(
-              value,
-              style: TextStyle(color: Colors.black54),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
 
   @override
@@ -328,8 +300,6 @@ class _ArbitratorcasesState extends State<Arbitratorcases> {
                 }
 
                 List<Case> cases = snapshot.data!;
-
-                // Filter the cases list based on the search query
                 List<Case> filteredCases = cases.where((caseData) {
                   return caseData.clientName
                       .toLowerCase()
@@ -426,7 +396,7 @@ class _ArbitratorcasesState extends State<Arbitratorcases> {
         icon: Icon(Icons.videocam, color: Colors.green),
         onPressed: () {
           if (!caseData.isClickedForMultiple) {
-            handleMeetingModal(caseData.caseId);
+            handleMeetingModal(context,caseData.id);
           }
         },
       );
@@ -451,13 +421,13 @@ class _ArbitratorcasesState extends State<Arbitratorcases> {
               icon: Icon(Icons.videocam, color: Colors.green),
               onPressed: () {
                 if (!caseData.isClickedForMultiple) {
-                  handleMeetingModal(caseData.caseId);
+                  handleMeetingModal(context,caseData.id);
                 }
               },
             ),
             IconButton(
               icon: Icon(Icons.assignment, color: Colors.green),
-              onPressed: () => generateOrderSheet(caseData.caseId),
+              onPressed: () => generateOrderSheet(caseData.id),
             ),
             IconButton(
               icon: Icon(Icons.done, color: Colors.green),
@@ -469,18 +439,302 @@ class _ArbitratorcasesState extends State<Arbitratorcases> {
     }
   }
 
+  Future<void> handleMeetingModal(BuildContext context, String id) async {
+    TextEditingController _titleController = TextEditingController();
+    DateTime _startDateTime = DateTime.now();
+    Duration _duration = Duration(hours: 1);
 
-  void handleMeetingModal(String id) {
-    // Your logic for handling the meeting modal
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Text(
+                'Schedule Meeting',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blue,
+                ),
+              ),
+              content: Container(
+                width: MediaQuery.of(context).size.width * 0.8,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      TextFormField(
+                        controller: _titleController,
+                        decoration: InputDecoration(
+                          labelText: 'Title',
+                          labelStyle: TextStyle(
+                            color: Colors.blue,
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Text(
+                            'Start Date and Time: ',
+                            style: TextStyle(
+                              color: Colors.blue,
+                            ),
+                          ),
+                          SizedBox(width: 8),
+                          Flexible(
+                            child: ElevatedButton(
+                              onPressed: () async {
+                                final DateTime? pickedDate = await showDatePicker(
+                                  context: context,
+                                  initialDate: _startDateTime,
+                                  firstDate: DateTime.now(),
+                                  lastDate: DateTime(2101),
+                                );
+                                if (pickedDate != null) {
+                                  final TimeOfDay? pickedTime = await showTimePicker(
+                                    context: context,
+                                    initialTime: TimeOfDay.fromDateTime(_startDateTime),
+                                  );
+                                  if (pickedTime != null) {
+                                    setState(() {
+                                      _startDateTime = DateTime(
+                                        pickedDate.year,
+                                        pickedDate.month,
+                                        pickedDate.day,
+                                        pickedTime.hour,
+                                        pickedTime.minute,
+                                      );
+                                    });
+                                  }
+                                }
+                              },
+                              child: Text(
+                                DateFormat('yyyy-MM-dd HH:mm').format(_startDateTime),
+                                style: TextStyle(
+                                  color: Colors.white,
+                                ),
+                              ),
+                              style: ButtonStyle(
+                                backgroundColor: MaterialStateProperty.all<Color>(Colors.blue),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 16),
+                      DropdownButtonFormField<Duration>(
+                        value: _duration,
+                        decoration: InputDecoration(
+                          labelText: 'Time Duration',
+                          labelStyle: TextStyle(
+                            color: Colors.blue,
+                          ),
+                        ),
+                        items: [
+                          DropdownMenuItem(
+                            child: Text('30 minutes'),
+                            value: Duration(minutes: 30),
+                          ),
+                          DropdownMenuItem(
+                            child: Text('45 minutes'),
+                            value: Duration(minutes: 45),
+                          ),
+                          DropdownMenuItem(
+                            child: Text('50 minutes'),
+                            value: Duration(minutes: 50),
+                          ),
+                          DropdownMenuItem(
+                            child: Text('60 minutes'),
+                            value: Duration(minutes: 60),
+                          ),
+                        ],
+                        onChanged: (value) {
+                          if (value != null) {
+                            setState(() {
+                              _duration = value;
+                            });
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text(
+                    'Cancel',
+                    style: TextStyle(
+                      color: Colors.blue,
+                    ),
+                  ),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    String trimmedTitle = _titleController.text.trim();
+
+                    if (trimmedTitle.isEmpty) {
+                      _showMessageDialog(context, 'Error', 'Please enter a title');
+                      return;
+                    }
+
+                    print('Scheduling meeting with caseId: $id');
+                    print('Title: $trimmedTitle');
+                    print('Start DateTime: $_startDateTime');
+                    print('Duration: $_duration');
+
+                    Navigator.of(context).pop();
+                    _showLoadingDialog(context);
+                    await _scheduleMeeting(context, id, trimmedTitle, _startDateTime, _duration);
+                  },
+                  child: Text(
+                    'Schedule',
+                    style: TextStyle(
+                      color: Colors.white,
+                    ),
+                  ),
+                  style: ButtonStyle(
+                    backgroundColor: MaterialStateProperty.all<Color>(Colors.blue),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+  String formatDateTime(DateTime dateTime) {
+    return DateFormat('yyyy-MM-ddTHH:mm:ss').format(dateTime);
+  }
+  Future<void> _scheduleMeeting(BuildContext context, String id, String title, DateTime startDateTime, Duration duration) async {
+    String formattedStartTime = formatDateTime(startDateTime);
+    String formattedEndTime = formatDateTime(startDateTime.add(duration));
+    print('Start scheduling meeting...');
+    print('id: $id');
+    print('title: $title');
+    print('startDateTime: $startDateTime');
+    print('duration: $duration');
+    try {
+      print('Scheduling meeting...');
+      var headers = {
+        'Content-Type': 'application/json',
+      };
+      var request = http.Request('POST', Uri.parse('https://odr.sandhee.com/api/webex/create-meeting'));
+      if (id == null || formattedStartTime == null || formattedEndTime == null || title == null) {
+        print("One or more required values are null.");
+        return;
+      }
+      request.body = json.encode({
+        "caseId": id ?? '',
+        "startTime": formattedStartTime??'',
+        "endTime": formattedEndTime ?? '',
+        "title": title ?? '',
+      });
+      request.headers.addAll(headers);
+      print('Request body: ${request.body}');
+      _showLoadingDialog(context);
+
+      final stopwatch = Stopwatch()..start();
+      http.StreamedResponse response = await request.send();
+      stopwatch.stop();
+
+      print('API call duration: ${stopwatch.elapsedMilliseconds}ms');
+      print('Response status code: ${response.statusCode}');
+
+
+      String responseBody = await response.stream.bytesToString();
+      print('Response body: $responseBody');
+      if (Navigator.canPop(context)) {
+        Navigator.of(context).pop();
+      }
+
+
+      if (response.statusCode == 200) {
+        if (responseBody.isNotEmpty) {
+          // Parse the response body
+          var jsonResponse = json.decode(responseBody);
+
+          if (jsonResponse['id'] != null) {
+            // Proceed with your logic using the response data
+            _showMessageDialog(context, 'Meeting Scheduled', 'The meeting was successfully scheduled. Meeting ID: ${jsonResponse['id']}');
+          } else {
+            _showMessageDialog(context, 'Error', 'Received unexpected response from the server.');
+          }
+        } else {
+          _showMessageDialog(context, 'Error', 'Received empty response from the server.');
+        }
+      } else {
+        print('Error: ${response.reasonPhrase}');
+        _showMessageDialog(context, 'Error', 'Failed to schedule the meeting. Response: $responseBody');
+      }
+    } catch (e) {
+      print('Error: $e');
+      // Close the loading dialog if an error occurs
+      if (Navigator.canPop(context)) {
+        Navigator.of(context).pop();
+      }
+      if (id == null || title.isEmpty || startDateTime == null || duration == null) {
+        _showMessageDialog(context, 'Error', 'Invalid input data. Please check your inputs.');
+        return;
+      }
+      _showMessageDialog(context, 'Error', 'An error occurred while scheduling the meeting.');
+    }
+  }
+  void _showLoadingDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return Dialog(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(width: 16),
+                Text("Scheduling..."),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showMessageDialog(BuildContext context, String title, String message) {
+
+    if (mounted) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text(title),
+            content: Text(message),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: Text('OK'),
+              ),
+            ],
+          );
+        },
+      );
+    }
   }
 
   void handleMeeting(Meeting meeting) {
 
+
   }
 
   Future<void> handleAllMeetingCompleted(BuildContext context, String caseId) async {
-    // print("caseId: $caseId");
-    // Validate the caseId format
     var url = Uri.parse('https://odr.sandhee.com/api/cases/uploadordersheet');
 
 
@@ -496,7 +750,7 @@ class _ArbitratorcasesState extends State<Arbitratorcases> {
       return;
     }
 
-    // Show the confirmation dialog
+
     bool? result = await showDialog(
       context: context,
       builder: (context) {
@@ -743,8 +997,6 @@ class _ArbitratorcasesState extends State<Arbitratorcases> {
       print("Invalid file type. Only PDF files are allowed.");
       return;
     }
-
-    // 4. Create the request
     var request = http.MultipartRequest('POST', url)
       ..headers.addAll(headers)
       ..fields['caseId'] = id
@@ -790,7 +1042,7 @@ Future<void> uploadOrdersheet(File file, String id) async {
   }
 
   var headers = {
-    'bearer': '$token', // Use Bearer token for the Authorization header
+    'token': '$token',
   };
 
   if (!file.path.endsWith('.pdf')) {

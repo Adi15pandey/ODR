@@ -22,7 +22,7 @@ class _ArbitratorScreenState extends State<ArbitratorScreen> {
 
 
   Future<List<dynamic>> fetchArbitrators() async {
-    final response = await http.get(Uri.parse('https://odr.sandhee.com/api/arbitrator/all'));
+    final response = await http.get(Uri.parse('http://192.168.1.22:4001/api/arbitrator/all'));
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);

@@ -69,7 +69,7 @@ class _ArbitratorcasesState extends State<Arbitratorcases> {
 
     try {
       var request = http.Request('GET',
-          Uri.parse('https://odr.sandhee.com/api/cases/arbitratorcases'));
+          Uri.parse('http://192.168.1.22:4001/api/cases/arbitratorcases'));
       request.headers.addAll(headers);
 
 
@@ -732,7 +732,7 @@ class _ArbitratorcasesState extends State<Arbitratorcases> {
   }
 
   Future<void> handleAllMeetingCompleted(BuildContext context, String caseId) async {
-    var url = Uri.parse('https://odr.sandhee.com/api/cases/uploadordersheet');
+    var url = Uri.parse('http://192.168.1.22:4001/api/cases/uploadordersheet');
 
 
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -779,7 +779,7 @@ class _ArbitratorcasesState extends State<Arbitratorcases> {
           'Content-Type': 'application/json',
         };
 
-        var request = http.Request('PUT', Uri.parse('https://odr.sandhee.com/api/cases/updatemeetstatus'));
+        var request = http.Request('PUT', Uri.parse('http://192.168.1.22:4001/api/cases/updatemeetstatus'));
 
         // Send the valid caseId to the API
         request.body = json.encode({
@@ -975,7 +975,7 @@ class _ArbitratorcasesState extends State<Arbitratorcases> {
 
   Future<void> uploadAwardFile(File file, String id) async {
 
-    var url = Uri.parse('https://odr.sandhee.com/api/cases/uploadawards');
+    var url = Uri.parse('http://192.168.1.22:4001/api/cases/uploadawards');
 
 
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -1027,7 +1027,7 @@ class _ArbitratorcasesState extends State<Arbitratorcases> {
 }
 Future<void> uploadOrdersheet(File file, String id) async {
 
-  var url = Uri.parse('https://odr.sandhee.com/api/cases/uploadordersheet');
+  var url = Uri.parse('http://192.168.1.22:4001/api/cases/uploadordersheet');
 
 
   SharedPreferences prefs = await SharedPreferences.getInstance();

@@ -63,7 +63,7 @@ class _ArbitratorMainScreenState extends State<ArbitratorMainScreen> {
   }
 
   Future<void> _fetchCounts() async {
-    final url = 'https://odr.sandhee.com/api/global/arbitrator/counts';
+    final url = 'http://192.168.1.22:4001/api/global/arbitrator/counts';
 
     final headers = {
       'token': '$token',
@@ -97,7 +97,7 @@ class _ArbitratorMainScreenState extends State<ArbitratorMainScreen> {
   }
 
   Future<void> _fetchCaseCompletedData() async {
-    final url = 'https://odr.sandhee.com/api/cases/chartdata/arbitrator';
+    final url = 'http://192.168.1.22:4001/api/cases/chartdata/arbitrator';
 
     final headers = {
       'token': '$token',
@@ -125,7 +125,7 @@ class _ArbitratorMainScreenState extends State<ArbitratorMainScreen> {
   }
 
   Future<void> _fetchMeetingData() async {
-    final url = 'https://odr.sandhee.com/api/webex/recent-meetings/arbitrator';
+    final url = 'http://192.168.1.22:4001/api/webex/recent-meetings/arbitrator';
     final headers = {
       'token': '$token',
     };
@@ -152,7 +152,7 @@ class _ArbitratorMainScreenState extends State<ArbitratorMainScreen> {
   }
 
   Future<void> _fetchRecentMeetingData() async {
-    final url = 'https://odr.sandhee.com/api/webex/recent-fullMeetingDataWithCaseDetails/arbitrator'; // Your API endpoint for recent meetings
+    final url = 'http://192.168.1.22:4001/api/webex/recent-fullMeetingDataWithCaseDetails/arbitrator'; // Your API endpoint for recent meetings
     final headers = {
       'token': '$token',
     };

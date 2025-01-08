@@ -22,7 +22,7 @@ class _ArbitratormetingsState extends State<Arbitratormetings> {
   void initState() {
     super.initState();
     _fetchToken();
-    _searchController.addListener(_filterMeetings); // Listen to search input
+    _searchController.addListener(_filterMeetings);
   }
 
   // Fetch token from shared preferences
@@ -43,9 +43,9 @@ class _ArbitratormetingsState extends State<Arbitratormetings> {
     }
   }
 
-  // Fetch recent meeting data from API
+
   Future<void> _fetchMeetingData() async {
-    final url = 'https://odr.sandhee.com/api/webex/all-meetings/arbitrator';
+    final url = 'http://192.168.1.22:4001/api/webex/all-meetings/arbitrator';
     final headers = {'token': '$token'};
 
     try {

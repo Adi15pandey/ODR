@@ -3,11 +3,15 @@ import 'package:http/http.dart' as http;
 import 'package:odr_sandhee/Admin_main_screen.dart';
 import 'package:odr_sandhee/arbitrator_main_screen.dart';
 import 'package:odr_sandhee/respondend_main_screen.dart';
+import 'package:odr_sandhee/verifyotpadmin.dart';
+import 'package:odr_sandhee/verifyotparbitrator.dart';
+import 'package:odr_sandhee/verifyotpclient.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:odr_sandhee/client_main_screen.dart';
 import 'package:odr_sandhee/forgot_password.dart';
 import 'package:odr_sandhee/register.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -38,7 +42,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _clientLogin() async {
-    String url = 'https://odr.sandhee.com/api/auth/login';
+    String url = 'http://192.168.1.12:4001/api/auth/login';
     var headers = {'Content-Type': 'application/json'};
     var request = http.Request('POST', Uri.parse(url));
     request.body = json.encode({
@@ -54,14 +58,19 @@ class _LoginScreenState extends State<LoginScreen> {
       var responseBody = await response.stream.bytesToString();
       var responseData = json.decode(responseBody);
 
-      if (responseData.containsKey('token') && responseData.containsKey('role')) {
-        await _saveToken(responseData['token']);
+      if (responseData.containsKey('role') && responseData.containsKey('email')) {
+        _storedEmail = responseData['email']; // Store the email for OTP
+        print('Navigating to Verifyotp screen with email: $_storedEmail');
 
-        if (responseData['role'] == 'client') {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => ClientMainScreen()));
-        } else {
-          _showErrorDialog('Invalid role');
-        }
+        // Ensure navigation is within a valid BuildContext
+        if (!mounted) return;
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => Verifyotpclient(storedEmail: _storedEmail ?? ''),
+          ),
+        );
       } else {
         _showErrorDialog('Invalid response structure');
       }
@@ -71,7 +80,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _respondentLogin(String dynamicaccountnumber) async {
-    String accountNumberUrl = 'https://odr.sandhee.com/api/cases/casewithaccountnumber/$dynamicaccountnumber';
+    String accountNumberUrl = 'http://192.168.1.12:4001/api/cases/casewithaccountnumber/$dynamicaccountnumber';
     var headers = {'Content-Type': 'application/json'};
 
     var request = http.Request('GET', Uri.parse(accountNumberUrl));
@@ -94,8 +103,14 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  @override
+  void initState() {
+    super.initState();
+    _otpController.clear();
+  }
+
   Future<void> _sendOtp(String mobile, String accountNo) async {
-    String otpUrl = 'https://odr.sandhee.com/api/auth/respondentotp';
+    String otpUrl = 'http://192.168.1.12:4001/api/auth/respondentotp';
     var headers = {'Content-Type': 'application/json'};
 
     var request = http.Request('POST', Uri.parse(otpUrl));
@@ -115,7 +130,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _verifyOtp() async {
-    String otpVerifyUrl = 'https://odr.sandhee.com/api/auth/respondentlogin';
+    String otpVerifyUrl = 'http://192.168.1.12:4001/api/auth/respondentlogin';
     var headers = {'Content-Type': 'application/json'};
     var request = http.Request('POST', Uri.parse(otpVerifyUrl));
     request.body = json.encode({
@@ -130,7 +145,8 @@ class _LoginScreenState extends State<LoginScreen> {
       var responseData = json.decode(await response.stream.bytesToString());
       if (responseData.containsKey('token')) {
         await _saveToken(responseData['token']);
-        Navigator.push(context, MaterialPageRoute(builder: (context) => RespondendMainScreen()));
+        Navigator.push(context,
+            MaterialPageRoute(builder: (context) => RespondendMainScreen()));
       } else {
         _showErrorDialog('Token not found in response');
       }
@@ -140,7 +156,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _arbitratorLogin() async {
-    String url = 'https://odr.sandhee.com/api/auth/login';
+    String url = 'http://192.168.1.12:4001/api/auth/login';
     var headers = {'Content-Type': 'application/json'};
     var request = http.Request('POST', Uri.parse(url));
     request.body = json.encode({
@@ -156,15 +172,19 @@ class _LoginScreenState extends State<LoginScreen> {
       var responseBody = await response.stream.bytesToString();
       var responseData = json.decode(responseBody);
 
-      if (responseData.containsKey('token') && responseData.containsKey('role')) {
-        await _saveToken(responseData['token']);  // Save the token
+      if (responseData.containsKey('role') && responseData.containsKey('email')) {
+        _storedEmail = responseData['email']; // Store the email for OTP
+        print('Navigating to Verifyotp screen with email: $_storedEmail');
 
-        if (responseData['role'] == 'arbitrator') {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => ArbitratorMainScreen()));
-        }
-        else {
-          _showErrorDialog('Invalid role');
-        }
+        // Ensure navigation is within a valid BuildContext
+        if (!mounted) return;
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => Verifyotparbitrator(storedEmail: _storedEmail ?? ''),
+          ),
+        );
       } else {
         _showErrorDialog('Invalid response structure');
       }
@@ -172,39 +192,64 @@ class _LoginScreenState extends State<LoginScreen> {
       _showErrorDialog(response.reasonPhrase ?? 'Login failed');
     }
   }
+String?_storedEmail;
   Future<void> _adminLogin() async {
-    String url = 'https://odr.sandhee.com/api/auth/login';
+    String url = 'http://192.168.1.12:4001/api/auth/login';
     var headers = {'Content-Type': 'application/json'};
+
+    // Debugging log for input data
+    print('Attempting login with Email: ${_emailController.text}');
+
     var request = http.Request('POST', Uri.parse(url));
     request.body = json.encode({
       "emailId": _emailController.text,
-      "password": _passwordController.text
+      "password": _passwordController.text,
     });
 
     request.headers.addAll(headers);
 
-    http.StreamedResponse response = await request.send();
+    try {
+      // Send the login request
+      http.StreamedResponse response = await request.send();
+      print('Status Code: ${response.statusCode}');
 
-    if (response.statusCode == 200) {
-      var responseBody = await response.stream.bytesToString();
-      var responseData = json.decode(responseBody);
+      if (response.statusCode == 200) {
+        var responseBody = await response.stream.bytesToString();
+        print('Response Body: $responseBody');
 
-      if (responseData.containsKey('token') && responseData.containsKey('role')) {
-        await _saveToken(responseData['token']);  // Save the token
+        var responseData = json.decode(responseBody);
 
-        if (responseData['role'] == 'admin') {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => AdminMainScreen()));
-        }
-        else {
-          _showErrorDialog('Invalid role');
+        // Validate the response
+        if (responseData.containsKey('role') && responseData.containsKey('email')) {
+          _storedEmail = responseData['email']; // Store the email for OTP
+          print('Navigating to Verifyotp screen with email: $_storedEmail');
+
+          // Ensure navigation is within a valid BuildContext
+          if (!mounted) return;
+
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => Verifyotpadmin(storedEmail: _storedEmail ?? ''),
+            ),
+          );
+        } else {
+          print('Invalid response structure: $responseData');
+          _showErrorDialog('Invalid response structure from the server');
         }
       } else {
-        _showErrorDialog('Invalid response structure');
+        // Log and show error for non-200 status codes
+        var errorBody = await response.stream.bytesToString();
+        print('Error Response Body: $errorBody');
+        _showErrorDialog('Login failed: ${response.reasonPhrase}');
       }
-    } else {
-      _showErrorDialog(response.reasonPhrase ?? 'Login failed');
+    } catch (e) {
+      // Handle exceptions
+      print('Exception occurred during login: $e');
+      _showErrorDialog('An error occurred. Please try again.');
     }
   }
+
 
 
 
@@ -227,26 +272,57 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
 
-
   void _showErrorDialog(String message) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Error'),
-          content: Text(message),
+          backgroundColor: Colors.white,
+          // Set background color to white for the dialog
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(
+                15.0), // Rounded corners for the dialog
+          ),
+          title: Text(
+            'Error',
+            style: TextStyle(
+              color: Colors.redAccent, // Color the title text in red
+              fontSize: 20,
+              fontWeight: FontWeight.bold, // Make the title bold
+            ),
+          ),
+          content: Padding(
+            padding: const EdgeInsets.only(top: 10.0),
+            // Add top padding for the content
+            child: Text(
+              message,
+              style: TextStyle(
+                color: Colors.black87, // Dark color for the content
+                fontSize: 16,
+              ),
+            ),
+          ),
           actions: <Widget>[
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: Text('OK'),
+              child: Text(
+                'OK',
+                style: TextStyle(
+                  color: Colors.blue, // Blue color for the button text
+                  fontSize: 16,
+                  fontWeight: FontWeight
+                      .w500, // Make the button text slightly bold
+                ),
+              ),
             ),
           ],
         );
       },
     );
   }
+
 
   void _showOtpDialog() {
     showDialog(
@@ -289,35 +365,39 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    double screenWidth = MediaQuery.of(context).size.width;
+    double screenWidth = MediaQuery
+        .of(context)
+        .size
+        .width;
 
     return Scaffold(
-      backgroundColor: Colors.blue[800],
+      backgroundColor: Colors.blue[800], // Light background color
       body: Center(
         child: SingleChildScrollView(
-          padding: EdgeInsets.all(20),
+          padding: const EdgeInsets.all(20),
           child: ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: 600),
+            constraints: const BoxConstraints(maxWidth: 600),
             child: Form(
               key: _formKey,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  SizedBox(height: 20),
+                  const SizedBox(height: 20),
                   Center(
                     child: Image.asset(
                       'assets/Images/Group.png',
-                      height: 70,
+                      height: 80,
                     ),
                   ),
-                  SizedBox(height: 20),
+                  const SizedBox(height: 20),
                   Card(
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(15),
                     ),
-                    elevation: 5,
+                    elevation: 10,
+                    shadowColor: Colors.blue[800],
                     child: Padding(
-                      padding: EdgeInsets.all(20),
+                      padding: const EdgeInsets.all(20),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -325,33 +405,37 @@ class _LoginScreenState extends State<LoginScreen> {
                             child: Text(
                               '$userType Login',
                               style: TextStyle(
-                                fontSize: screenWidth > 600 ? 24 : 20,
+                                fontSize: screenWidth > 600 ? 26 : 22,
                                 fontWeight: FontWeight.bold,
+                                color: Colors.blue[900],
                               ),
                             ),
                           ),
-                          SizedBox(height: 20),
+                          const SizedBox(height: 20),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              _buildRadioButton('Client'),
-                              _buildRadioButton('Respondent'),
+                              _buildRadioButton('Client', Colors.blue),
+                              _buildRadioButton('Respondent', Colors.green),
                             ],
                           ),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              _buildRadioButton('Admin'),
-                              _buildRadioButton('Arbitrator'),
+                              _buildRadioButton('Admin', Colors.orange),
+                              _buildRadioButton('Arbitrator', Colors.purple),
                             ],
                           ),
-                          SizedBox(height: 20),
+                          const SizedBox(height: 20),
                           if (userType == 'Respondent') ...[
                             TextFormField(
                               controller: _accountNumberController,
                               decoration: InputDecoration(
                                 labelText: 'Account Number',
-                                border: OutlineInputBorder(),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                prefixIcon: const Icon(Icons.account_circle),
                               ),
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
@@ -360,49 +444,56 @@ class _LoginScreenState extends State<LoginScreen> {
                                 return null;
                               },
                             ),
-                          ] else ...[
-                            TextFormField(
-                              controller: _emailController,
-                              decoration: InputDecoration(
-                                labelText: 'Email',
-                                border: OutlineInputBorder(),
-                              ),
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Please enter your email';
-                                }
-                                return null;
-                              },
-                            ),
-                            SizedBox(height: 10),
-                            TextFormField(
-                              controller: _passwordController,
-                              obscureText: !_passwordVisible,
-                              decoration: InputDecoration(
-                                labelText: 'Password',
-                                border: OutlineInputBorder(),
-                                suffixIcon: IconButton(
-                                  icon: Icon(
-                                    _passwordVisible
-                                        ? Icons.visibility
-                                        : Icons.visibility_off,
+                          ] else
+                            ...[
+                              TextFormField(
+                                controller: _emailController,
+                                decoration: InputDecoration(
+                                  labelText: 'Email',
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(10),
                                   ),
-                                  onPressed: () {
-                                    setState(() {
-                                      _passwordVisible = !_passwordVisible;
-                                    });
-                                  },
+                                  prefixIcon: const Icon(Icons.email),
                                 ),
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Please enter your email';
+                                  }
+                                  return null;
+                                },
                               ),
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Please enter your password';
-                                }
-                                return null;
-                              },
-                            ),
-                          ],
-                          SizedBox(height: 20),
+                              const SizedBox(height: 10),
+                              TextFormField(
+                                controller: _passwordController,
+                                obscureText: !_passwordVisible,
+                                decoration: InputDecoration(
+                                  labelText: 'Password',
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  prefixIcon: const Icon(Icons.lock),
+                                  suffixIcon: IconButton(
+                                    icon: Icon(
+                                      _passwordVisible
+                                          ? Icons.visibility
+                                          : Icons.visibility_off,
+                                    ),
+                                    onPressed: () {
+                                      setState(() {
+                                        _passwordVisible = !_passwordVisible;
+                                      });
+                                    },
+                                  ),
+                                ),
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Please enter your password';
+                                  }
+                                  return null;
+                                },
+                              ),
+                            ],
+                          const SizedBox(height: 20),
                           Center(
                             child: ElevatedButton(
                               onPressed: () async {
@@ -410,39 +501,59 @@ class _LoginScreenState extends State<LoginScreen> {
                                   await _login();
                                 }
                               },
-                              child: Text('Login'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.blue[700],
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 40,
+                                  vertical: 15,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(30),
+                                ),
+                              ),
+                              child: const Text(
+                                'Login',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                             ),
                           ),
-                          SizedBox(height: 20),
+                          const SizedBox(height: 20),
                           Center(
                             child: InkWell(
                               onTap: () {
                                 Navigator.push(
                                   context,
-                                  MaterialPageRoute(builder: (context) => ForgotPassword()),
+                                  MaterialPageRoute(
+                                      builder: (context) => ForgotPassword()),
                                 );
                               },
                               child: Text(
                                 'Forgot Password?',
                                 style: TextStyle(
-                                  color: Colors.blue,
+                                  color: Colors.blue[700],
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
                             ),
                           ),
-                          SizedBox(height: 20),
+                          const SizedBox(height: 20),
                           Center(
                             child: InkWell(
                               onTap: () {
                                 Navigator.push(
                                   context,
-                                  MaterialPageRoute(builder: (context) => RegisterScreen()),
+                                  MaterialPageRoute(
+                                      builder: (context) => RegisterScreen()),
                                 );
                               },
                               child: Text(
-                                'Don\'t have an account? Register',
+                                "Don't have an account? Register",
                                 style: TextStyle(
-                                  color: Colors.blue,
+                                  color: Colors.blue[700],
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
                             ),
@@ -459,11 +570,12 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
   }
-  Widget _buildRadioButton(String type) {
+
+  Widget _buildRadioButton(String label, Color color) {
     return Row(
       children: [
         Radio<String>(
-          value: type,
+          value: label,
           groupValue: userType,
           onChanged: (value) {
             setState(() {
@@ -471,7 +583,13 @@ class _LoginScreenState extends State<LoginScreen> {
             });
           },
         ),
-        Text(type),
+        Text(
+          label,
+          style: TextStyle(
+            color: color,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ],
     );
   }

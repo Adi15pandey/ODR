@@ -44,7 +44,7 @@ class _ArbitratorDocumentState extends State<ArbitratorDocument> {
 
   Future<void> _fetchData() async {
     final response = await http.get(
-      Uri.parse('https://odr.sandhee.com/api/cases/arbitratorcases'),
+      Uri.parse('http://192.168.1.12:4001/api/cases/arbitratorcases'),
       headers: {'token': '$token'},
     );
 

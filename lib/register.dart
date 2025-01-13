@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'dart:convert'; // For json encoding
+import 'package:http/http.dart' as http;
 
 class RegisterScreen extends StatefulWidget {
   @override
@@ -14,6 +16,72 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController _addressController = TextEditingController();
   final TextEditingController _aboutController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+
+  Future<void> _registerUser() async {
+    // API Endpoint
+    final String apiUrl = 'http://192.168.1.12:4001/api/auth/register';
+
+    // Request Body
+    final Map<String, dynamic> requestBody = {
+      "name": _fullNameController.text,
+      "password": _passwordController.text,
+      "contactNo": _phoneNumberController.text,
+      "emailId": _emailController.text,
+      "about": _aboutController.text,
+      "address": _addressController.text,
+    };
+
+    try {
+      // Show a loading indicator
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+
+      // Make the POST request
+      final response = await http.post(
+        Uri.parse(apiUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(requestBody),
+      );
+
+      // Close the loading indicator
+      Navigator.pop(context);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        // Registration successful
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Registration successful!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+
+        // Navigate to login screen
+        Navigator.pop(context);
+      } else {
+        // Registration failed
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Registration failed: ${response.body}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      // Error occurred
+      Navigator.pop(context); // Close loading indicator
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('An error occurred: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -159,7 +227,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             child: ElevatedButton(
                               onPressed: () {
                                 if (_formKey.currentState!.validate()) {
-                                  // Process the registration
+                                  _registerUser();
                                 }
                               },
                               style: ElevatedButton.styleFrom(

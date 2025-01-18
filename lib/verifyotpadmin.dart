@@ -1,27 +1,34 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:odr_sandhee/Admin_main_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:odr_sandhee/Admin_main_screen.dart';
+import 'package:odr_sandhee/GlobalServiceurl.dart';
 import 'package:odr_sandhee/arbitrator_main_screen.dart';
 import 'package:odr_sandhee/client_main_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class Verifyotpadmin extends StatefulWidget {
+class VerifyOtpAdmin extends StatefulWidget {
   final String storedEmail;
 
-  const Verifyotpadmin({super.key, required this.storedEmail});
+  const VerifyOtpAdmin({super.key, required this.storedEmail});
 
   @override
-  State<Verifyotpadmin> createState() => _VerifyotpadminState();
+  State<VerifyOtpAdmin> createState() => _VerifyOtpAdminState();
 }
 
-class _VerifyotpadminState extends State<Verifyotpadmin> {
-  final TextEditingController _emailOtpController = TextEditingController();
-  final TextEditingController _phoneOtpController = TextEditingController();
-  final String apiUrl = 'http://192.168.1.12:4001/api/auth/login/otp';
+class _VerifyOtpAdminState extends State<VerifyOtpAdmin> {
+  final List<TextEditingController> _emailOtpControllers =
+  List.generate(4, (_) => TextEditingController());
+  final List<TextEditingController> _phoneOtpControllers =
+  List.generate(4, (_) => TextEditingController());
 
+  final String apiUrl = '${GlobalService.baseUrl}/api/auth/login/otp';
   bool isLoading = false;
+
+  String _getOtpFromControllers(List<TextEditingController> controllers) {
+    return controllers.map((controller) => controller.text).join();
+  }
 
   Future<void> _verifyOtp() async {
     setState(() {
@@ -32,69 +39,34 @@ class _VerifyotpadminState extends State<Verifyotpadmin> {
       var headers = {'Content-Type': 'application/json'};
       var body = json.encode({
         "emailId": widget.storedEmail,
-        "otpSMS": _phoneOtpController.text,
-        "otpMail": _emailOtpController.text,
+        "otpSMS": _getOtpFromControllers(_phoneOtpControllers),
+        "otpMail": _getOtpFromControllers(_emailOtpControllers),
       });
 
-      var request = http.Request('POST', Uri.parse(apiUrl));
-      request.body = body;
-      request.headers.addAll(headers);
-
-      http.StreamedResponse response = await request.send();
+      var response = await http.post(Uri.parse(apiUrl), headers: headers, body: body);
 
       if (response.statusCode == 200) {
-        var responseBody = await response.stream.bytesToString();
-        print('Response: $responseBody');
+        var responseData = json.decode(response.body);
 
-        var responseData = json.decode(responseBody);
-
-        // Save the token and role locally
-        if (responseData.containsKey('token') && responseData.containsKey('role')) {
-          SharedPreferences prefs = await SharedPreferences.getInstance();
-          await prefs.setString('authToken', responseData['token']);
-          await prefs.setString('role', responseData['role']);
-          await prefs.setString('userId', responseData['id']);
-
-          print('Token saved: ${responseData['token']}');
-        }
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        await prefs.setString('auth_token', responseData['token']);
+        await prefs.setString('role', responseData['role']);
+        await prefs.setString('user_id', responseData['id']);
 
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('OTP Verified Successfully')),
         );
+
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => AdminMainScreen()),
         );
-
-
-        if (responseData['role'] == 'admin')
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => AdminMainScreen()),
-          );
-         else if (responseData['role'] == 'client') {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => ClientMainScreen()),
-          );
-        } else if (responseData['role'] == 'arbitrator') {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => ArbitratorMainScreen()),
-          );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Invalid user role')),
-          );
-        }
       } else {
-        print('Error: ${response.reasonPhrase}');
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('OTP Verification Failed')),
         );
       }
     } catch (e) {
-      print('Exception: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('An error occurred')),
       );
@@ -105,6 +77,36 @@ class _VerifyotpadminState extends State<Verifyotpadmin> {
     }
   }
 
+  Widget _buildOtpInputRow(List<TextEditingController> controllers) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(
+        controllers.length,
+            (index) => SizedBox(
+          width: 40,
+          height: 50,
+          child: TextField(
+            controller: controllers[index],
+            keyboardType: TextInputType.number,
+            textAlign: TextAlign.center,
+            maxLength: 1,
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            decoration: InputDecoration(
+              counterText: "",
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8.0),
+              ),
+            ),
+            onChanged: (value) {
+              if (value.isNotEmpty && index < controllers.length - 1) {
+                FocusScope.of(context).nextFocus();
+              }
+            },
+          ),
+        ),
+      ).expand((element) => [element, SizedBox(width: 8)]).toList()..removeLast(),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -121,7 +123,7 @@ class _VerifyotpadminState extends State<Verifyotpadmin> {
             ),
             SizedBox(width: 10),
             Text(
-              'Verify Otp',
+              'Verify OTP',
               style: GoogleFonts.poppins(
                 fontWeight: FontWeight.bold,
                 fontSize: 24,
@@ -133,38 +135,34 @@ class _VerifyotpadminState extends State<Verifyotpadmin> {
       ),
       body: Center(
         child: Card(
-          elevation: 8.0, // Add shadow to the card
+          elevation: 8.0,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16.0), // Rounded corners
+            borderRadius: BorderRadius.circular(16.0),
           ),
           child: Padding(
-            padding: const EdgeInsets.all(20.0), // Padding inside the card
+            padding: const EdgeInsets.all(20.0),
             child: Column(
-              mainAxisSize: MainAxisSize.min, // Wraps content to its size
+              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                TextField(
-                  controller: _emailOtpController,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'OTP from Email',
-                    border: OutlineInputBorder(),
-                  ),
+                Text(
+                  'OTP from Email',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                 ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: _phoneOtpController,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'OTP from Phone',
-                    border: OutlineInputBorder(),
-                  ),
+                SizedBox(height: 8),
+                _buildOtpInputRow(_emailOtpControllers),
+                SizedBox(height: 16),
+                Text(
+                  'OTP from Phone',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 8),
+                _buildOtpInputRow(_phoneOtpControllers),
+                SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: isLoading ? null : _verifyOtp,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue[900], // Button color
+                    backgroundColor: Colors.blue[900],
                     padding: const EdgeInsets.symmetric(vertical: 14.0),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8.0),
@@ -174,7 +172,7 @@ class _VerifyotpadminState extends State<Verifyotpadmin> {
                       ? const CircularProgressIndicator(color: Colors.white)
                       : const Text(
                     'Verify OTP',
-                    style: TextStyle(fontSize: 16.0),
+                    style: TextStyle(fontSize: 16.0,color: Colors.white),
                   ),
                 ),
               ],

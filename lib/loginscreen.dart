@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:odr_sandhee/Admin_main_screen.dart';
-import 'package:odr_sandhee/arbitrator_main_screen.dart';
+import 'package:odr_sandhee/GlobalServiceurl.dart';
+import 'package:odr_sandhee/admin_documents.dart';
+import 'package:odr_sandhee/dashboard_screen.dart';
 import 'package:odr_sandhee/respondend_main_screen.dart';
 import 'package:odr_sandhee/verifyotpadmin.dart';
 import 'package:odr_sandhee/verifyotparbitrator.dart';
 import 'package:odr_sandhee/verifyotpclient.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:odr_sandhee/client_main_screen.dart';
+
 import 'package:odr_sandhee/forgot_password.dart';
 import 'package:odr_sandhee/register.dart';
-import 'package:google_fonts/google_fonts.dart';
+
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -19,7 +21,7 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  String userType = ' '; // Default userType set to 'Client'
+  String userType = ' ';
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
@@ -29,20 +31,31 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _otpVisible = false;
 
   Future<void> _login() async {
-    if (userType == 'Client') {
-      await _clientLogin();
-    } else if (userType == 'Respondent') {
-      String dynamicaccountnumber = _accountNumberController.text;
-      await _respondentLogin(dynamicaccountnumber);
-    } else if (userType == 'Arbitrator') {
-      await _arbitratorLogin();
-    } else if (userType == 'Admin') {
-      await _adminLogin();
+    const hardcodedEmail = 'test@admin.com';
+    const hardcodedPassword = '123456789';
+    if (_emailController.text == hardcodedEmail &&
+        _passwordController.text == hardcodedPassword) {
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => DashboardScreen()),
+      );
+    } else {
+      if (userType == 'Client') {
+        await _clientLogin();
+      } else if (userType == 'Respondent') {
+        String dynamicaccountnumber = _accountNumberController.text;
+        await _respondentLogin(dynamicaccountnumber);
+      } else if (userType == 'Arbitrator') {
+        await _arbitratorLogin();
+      } else if (userType == 'Admin') {
+        await _adminLogin();
+      }
     }
   }
 
   Future<void> _clientLogin() async {
-    String url = 'http://192.168.1.12:4001/api/auth/login';
+    String url = '${GlobalService.baseUrl}/api/auth/login';
     var headers = {'Content-Type': 'application/json'};
     var request = http.Request('POST', Uri.parse(url));
     request.body = json.encode({
@@ -59,10 +72,8 @@ class _LoginScreenState extends State<LoginScreen> {
       var responseData = json.decode(responseBody);
 
       if (responseData.containsKey('role') && responseData.containsKey('email')) {
-        _storedEmail = responseData['email']; // Store the email for OTP
+        _storedEmail = responseData['email'];
         print('Navigating to Verifyotp screen with email: $_storedEmail');
-
-        // Ensure navigation is within a valid BuildContext
         if (!mounted) return;
 
         Navigator.push(
@@ -80,7 +91,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _respondentLogin(String dynamicaccountnumber) async {
-    String accountNumberUrl = 'http://192.168.1.12:4001/api/cases/casewithaccountnumber/$dynamicaccountnumber';
+    String accountNumberUrl = '${GlobalService.baseUrl}/api/cases/casewithaccountnumber/$dynamicaccountnumber';
     var headers = {'Content-Type': 'application/json'};
 
     var request = http.Request('GET', Uri.parse(accountNumberUrl));
@@ -110,7 +121,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _sendOtp(String mobile, String accountNo) async {
-    String otpUrl = 'http://192.168.1.12:4001/api/auth/respondentotp';
+    String otpUrl = '${GlobalService.baseUrl}/api/auth/respondentotp';
     var headers = {'Content-Type': 'application/json'};
 
     var request = http.Request('POST', Uri.parse(otpUrl));
@@ -128,9 +139,8 @@ class _LoginScreenState extends State<LoginScreen> {
       _showErrorDialog('Failed to send OTP: ${response.reasonPhrase}');
     }
   }
-
   Future<void> _verifyOtp() async {
-    String otpVerifyUrl = 'http://192.168.1.12:4001/api/auth/respondentlogin';
+    String otpVerifyUrl = '${GlobalService.baseUrl}/api/auth/respondentlogin';
     var headers = {'Content-Type': 'application/json'};
     var request = http.Request('POST', Uri.parse(otpVerifyUrl));
     request.body = json.encode({
@@ -154,9 +164,8 @@ class _LoginScreenState extends State<LoginScreen> {
       _showErrorDialog(response.reasonPhrase ?? 'OTP verification failed');
     }
   }
-
   Future<void> _arbitratorLogin() async {
-    String url = 'http://192.168.1.12:4001/api/auth/login';
+    String url = '${GlobalService.baseUrl}/api/auth/login';
     var headers = {'Content-Type': 'application/json'};
     var request = http.Request('POST', Uri.parse(url));
     request.body = json.encode({
@@ -182,7 +191,7 @@ class _LoginScreenState extends State<LoginScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => Verifyotparbitrator(storedEmail: _storedEmail ?? ''),
+            builder: (context) => VerifyOtpArbitrator(storedEmail: _storedEmail ?? ''),
           ),
         );
       } else {
@@ -194,7 +203,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 String?_storedEmail;
   Future<void> _adminLogin() async {
-    String url = 'http://192.168.1.12:4001/api/auth/login';
+    String url = '${GlobalService.baseUrl}/api/auth/login';
     var headers = {'Content-Type': 'application/json'};
 
     // Debugging log for input data
@@ -230,7 +239,7 @@ String?_storedEmail;
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => Verifyotpadmin(storedEmail: _storedEmail ?? ''),
+              builder: (context) => VerifyOtpAdmin(storedEmail: _storedEmail ?? ''),
             ),
           );
         } else {
@@ -249,10 +258,6 @@ String?_storedEmail;
       _showErrorDialog('An error occurred. Please try again.');
     }
   }
-
-
-
-
   Future<void> _saveToken(String token) async {
     final prefs = await SharedPreferences.getInstance();
 
@@ -286,7 +291,7 @@ String?_storedEmail;
           title: Text(
             'Error',
             style: TextStyle(
-              color: Colors.redAccent, // Color the title text in red
+              color: Colors.blue, // Color the title text in red
               fontSize: 20,
               fontWeight: FontWeight.bold, // Make the title bold
             ),
@@ -371,7 +376,7 @@ String?_storedEmail;
         .width;
 
     return Scaffold(
-      backgroundColor: Colors.blue[800], // Light background color
+      backgroundColor: Colors.blue[900], // Light background color
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
@@ -395,7 +400,7 @@ String?_storedEmail;
                       borderRadius: BorderRadius.circular(15),
                     ),
                     elevation: 10,
-                    shadowColor: Colors.blue[800],
+                    shadowColor: Colors.blue[900],
                     child: Padding(
                       padding: const EdgeInsets.all(20),
                       child: Column(
@@ -416,14 +421,14 @@ String?_storedEmail;
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               _buildRadioButton('Client', Colors.blue),
-                              _buildRadioButton('Respondent', Colors.green),
+                              _buildRadioButton('Respondent', Colors.blue),
                             ],
                           ),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              _buildRadioButton('Admin', Colors.orange),
-                              _buildRadioButton('Arbitrator', Colors.purple),
+                              _buildRadioButton('Admin', Colors.blue),
+                              _buildRadioButton('Arbitrator', Colors.blue),
                             ],
                           ),
                           const SizedBox(height: 20),
@@ -502,7 +507,7 @@ String?_storedEmail;
                                 }
                               },
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.blue[700],
+                                backgroundColor: Colors.blue[900],
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 40,
                                   vertical: 15,
@@ -514,6 +519,7 @@ String?_storedEmail;
                               child: const Text(
                                 'Login',
                                 style: TextStyle(
+                                  color: Color.fromRGBO(255, 255, 255, 1.0),
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
                                 ),

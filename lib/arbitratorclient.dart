@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:odr_sandhee/GlobalServiceurl.dart';
 
 class ArbitratorScreen extends StatefulWidget {
   @override
@@ -22,7 +23,7 @@ class _ArbitratorScreenState extends State<ArbitratorScreen> {
 
 
   Future<List<dynamic>> fetchArbitrators() async {
-    final response = await http.get(Uri.parse('http://192.168.1.22:4001/api/arbitrator/all'));
+    final response = await http.get(Uri.parse('${GlobalService.baseUrl}/api/arbitrator/all'));
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);

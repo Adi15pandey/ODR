@@ -3,13 +3,12 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:odr_sandhee/Arbitratormodels.dart';
 import 'package:http/http.dart' as http;
+import 'package:odr_sandhee/GlobalServiceurl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:http_parser/http_parser.dart';
-import 'package:dio/dio.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:intl/intl.dart';
 
@@ -32,53 +31,60 @@ class _ArbitratorcasesState extends State<Arbitratorcases> {
   @override
   void initState() {
     super.initState();
-    _fetchToken();
+    _initializeData();
+  }
+
+  Future<void> _initializeData() async {
+    try {
+      await _fetchToken();
+      if (token != null && token!.isNotEmpty) {
+        setState(() {
+          futureCases = fetchCasesWithToken();
+        });
+      }
+    } catch (e) {
+      print('Error during initialization: $e');
+    }
   }
 
   Future<void> _fetchToken() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.reload(); // Ensure the latest data is fetched
 
+      String? savedToken = prefs.getString('auth_token');
 
-    await prefs.reload();
-
-    String? savedToken = prefs.getString('auth_token');
-
-    if (savedToken != null && savedToken.isNotEmpty) {
-      setState(() {
-        token = savedToken;
-      });
-      print('Token fetched: $token');
-      futureCases = fetchCasesWithToken();
-    } else {
-      print('Token not found');
+      if (savedToken != null && savedToken.isNotEmpty) {
+        setState(() {
+          token = savedToken;
+        });
+        print('Token fetched: $token');
+      } else {
+        print('Token not found');
+      }
+    } catch (e) {
+      print('Error fetching token: $e');
     }
   }
 
-
   Future<List<Case>> fetchCasesWithToken() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? token = prefs.getString('auth_token');
-
-    if (token == null) {
-      throw Exception('Token not found');
-    }
-
-    var headers = {
-      'token': token,
-    };
-
     try {
-      var request = http.Request('GET',
-          Uri.parse('http://192.168.1.22:4001/api/cases/arbitratorcases'));
-      request.headers.addAll(headers);
+      if (token == null || token!.isEmpty) {
+        throw Exception('Token is null or empty');
+      }
 
+      final headers = {'token': token!};
+      var request = http.Request(
+        'GET',
+        Uri.parse('${GlobalService.baseUrl}/api/cases/arbitratorcases'),
+      );
+      request.headers.addAll(headers);
 
       http.StreamedResponse response = await request.send();
 
       if (response.statusCode == 200) {
         String responseBody = await response.stream.bytesToString();
         print('Response Body: $responseBody');
-
 
         Map<String, dynamic> jsonResponse;
         try {
@@ -88,37 +94,33 @@ class _ArbitratorcasesState extends State<Arbitratorcases> {
           throw Exception('Failed to decode JSON: $e');
         }
 
-
-        if (jsonResponse.containsKey('caseData') &&
-            jsonResponse['caseData'] != null) {
+        if (jsonResponse.containsKey('caseData') && jsonResponse['caseData'] != null) {
           List<dynamic> casesData = jsonResponse['caseData'];
 
-
           if (casesData is List) {
-            List<Case> cases = casesData.map((caseData) =>
-                Case.fromJson(caseData)).toList();
-            return cases;
+            print('Cases parsed successfully.');
+            return casesData.map((caseData) => Case.fromJson(caseData)).toList();
           } else {
             print('caseData is not a list');
             return [];
           }
         } else {
-          print('No caseData key found in the response or data is null');
+          print('No caseData key found or it is null');
           return [];
         }
       } else {
-        print('Failed to load cases: ${response.statusCode} ${response
-            .reasonPhrase}');
+        print('Failed to load cases: ${response.statusCode} ${response.reasonPhrase}');
         return [];
       }
     } catch (e) {
-      print('Exception: $e');
+      print('Exception in fetchCasesWithToken: $e');
       return [];
     }
   }
 
+
   int convertToDateNow(String isoTimestamp) {
-    final date = DateTime.parse(isoTimestamp); // Ensure this is a valid ISO string
+    final date = DateTime.parse(isoTimestamp);
     return date.millisecondsSinceEpoch;
   }
 
@@ -166,7 +168,7 @@ class _ArbitratorcasesState extends State<Arbitratorcases> {
           actions: <Widget>[
             TextButton(
               style: TextButton.styleFrom(
-                backgroundColor: Colors.teal, // Softer teal color for the button
+                backgroundColor: Colors.teal,
                 padding: EdgeInsets.symmetric(vertical: 14.0, horizontal: 24.0),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
               ),
@@ -207,7 +209,7 @@ class _ArbitratorcasesState extends State<Arbitratorcases> {
                   label,
                   style: TextStyle(
                     fontSize: 18,
-                    fontWeight: FontWeight.w600, // Semi-bold for labels
+                    fontWeight: FontWeight.w600,
                     color: Colors.blueAccent,
                     fontFamily: 'Roboto', // Different font for labels
                   ),
@@ -238,7 +240,7 @@ class _ArbitratorcasesState extends State<Arbitratorcases> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.blue[800],
+        backgroundColor: Colors.blue[900],
         title: Row(
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
@@ -281,7 +283,7 @@ class _ArbitratorcasesState extends State<Arbitratorcases> {
               ),
             ),
           ),
-          // FutureBuilder to load the case data
+
           Expanded(
             child: FutureBuilder<List<Case>>(
               future: futureCases,
@@ -404,15 +406,38 @@ class _ArbitratorcasesState extends State<Arbitratorcases> {
        if  (convertToDateNow(caseData.meetings.last.end.toString()) > DateTime.now().millisecondsSinceEpoch) {
         return Row(
           children: [
-            IconButton(
-              icon: Icon(FontAwesomeIcons.playCircle, color: Colors.green),
-              onPressed: () => handleMeeting(caseData.meetings.last),
+            InkWell(
+              onTap: () {
+                final String urlString = caseData.meetings.last.webLink;
+
+                if (urlString.isEmpty) {
+                  print('Invalid URL: $urlString');
+                  return;
+                }
+
+                launch(urlString).then((bool success) {
+                  if (!success) {
+                    print('Could not launch $urlString');
+                  }
+                }).catchError((e) {
+                  print('Error launching URL: $e');
+                });
+              },
+              child: Icon(
+                FontAwesomeIcons.playCircle,
+                color: Colors.green,
+              ),
             ),
-            IconButton(
-              icon: Icon(Icons.done, color: Colors.green),
-              onPressed: () => handleAllMeetingCompleted(context,caseData.id),
+            SizedBox(width: 15),
+            InkWell(
+              onTap: () => handleAllMeetingCompleted(context, caseData.id),
+              child: Icon(
+                Icons.done,
+                color: Colors.green,
+              ),
             ),
           ],
+
         );
       } else {
         return Row(
@@ -447,15 +472,19 @@ class _ArbitratorcasesState extends State<Arbitratorcases> {
     await showDialog(
       context: context,
       builder: (context) {
+
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16), // Rounded corners for dialog
+              ),
               title: Text(
                 'Schedule Meeting',
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: Colors.blue,
+                  color: Colors.blueAccent,
                 ),
               ),
               content: Container(
@@ -463,27 +492,31 @@ class _ArbitratorcasesState extends State<Arbitratorcases> {
                 child: SingleChildScrollView(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
+                      // Title Input
                       TextFormField(
                         controller: _titleController,
                         decoration: InputDecoration(
-                          labelText: 'Title',
-                          labelStyle: TextStyle(
-                            color: Colors.blue,
+                          labelText: 'Meeting Title',
+                          labelStyle: TextStyle(color: Colors.blueAccent),
+                          hintText: 'Enter a meaningful title',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: BorderSide(color: Colors.blueAccent),
                           ),
                         ),
                       ),
-                      SizedBox(height: 16),
+                      SizedBox(height: 20),
+
+                      // Start Date and Time Picker
                       Row(
                         children: [
-                          Text(
-                            'Start Date and Time: ',
-                            style: TextStyle(
-                              color: Colors.blue,
-                            ),
-                          ),
-                          SizedBox(width: 8),
-                          Flexible(
+                          Icon(Icons.calendar_today_outlined, color: Colors.blueAccent),
+                          SizedBox(width: 12),
+                          Expanded(
                             child: ElevatedButton(
                               onPressed: () async {
                                 final DateTime? pickedDate = await showDatePicker(
@@ -510,26 +543,34 @@ class _ArbitratorcasesState extends State<Arbitratorcases> {
                                   }
                                 }
                               },
-                              child: Text(
-                                DateFormat('yyyy-MM-dd HH:mm').format(_startDateTime),
-                                style: TextStyle(
-                                  color: Colors.white,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.blueAccent,
+                                padding: EdgeInsets.symmetric(vertical: 12),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
                                 ),
                               ),
-                              style: ButtonStyle(
-                                backgroundColor: MaterialStateProperty.all<Color>(Colors.blue),
+                              child: Text(
+                                DateFormat('yyyy-MM-dd HH:mm').format(_startDateTime),
+                                style: TextStyle(color: Colors.white, fontSize: 16),
                               ),
                             ),
                           ),
                         ],
                       ),
-                      SizedBox(height: 16),
+                      SizedBox(height: 20),
+
+                      // Duration Dropdown
                       DropdownButtonFormField<Duration>(
                         value: _duration,
                         decoration: InputDecoration(
-                          labelText: 'Time Duration',
-                          labelStyle: TextStyle(
-                            color: Colors.blue,
+                          labelText: 'Meeting Duration',
+                          labelStyle: TextStyle(color: Colors.blueAccent),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: BorderSide(color: Colors.blueAccent),
                           ),
                         ),
                         items: [
@@ -563,15 +604,16 @@ class _ArbitratorcasesState extends State<Arbitratorcases> {
                 ),
               ),
               actions: <Widget>[
+                // Cancel Button
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
                   child: Text(
                     'Cancel',
-                    style: TextStyle(
-                      color: Colors.blue,
-                    ),
+                    style: TextStyle(color: Colors.grey),
                   ),
                 ),
+
+                // Schedule Button
                 ElevatedButton(
                   onPressed: () async {
                     String trimmedTitle = _titleController.text.trim();
@@ -581,27 +623,30 @@ class _ArbitratorcasesState extends State<Arbitratorcases> {
                       return;
                     }
 
-                    print('Scheduling meeting with caseId: $id');
-                    print('Title: $trimmedTitle');
-                    print('Start DateTime: $_startDateTime');
-                    print('Duration: $_duration');
-
                     Navigator.of(context).pop();
                     _showLoadingDialog(context);
-                    await _scheduleMeeting(context, id, trimmedTitle, _startDateTime, _duration);
+                    await _scheduleMeeting(
+                      context,
+                      id,
+                      trimmedTitle,
+                      _startDateTime,
+                      _duration,
+                    );
                   },
-                  child: Text(
-                    'Schedule',
-                    style: TextStyle(
-                      color: Colors.white,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blueAccent,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  style: ButtonStyle(
-                    backgroundColor: MaterialStateProperty.all<Color>(Colors.blue),
+                  child: Text(
+                    'Schedule',
+                    style: TextStyle(color: Colors.white),
                   ),
                 ),
               ],
             );
+
           },
         );
       },
@@ -613,72 +658,42 @@ class _ArbitratorcasesState extends State<Arbitratorcases> {
   Future<void> _scheduleMeeting(BuildContext context, String id, String title, DateTime startDateTime, Duration duration) async {
     String formattedStartTime = formatDateTime(startDateTime);
     String formattedEndTime = formatDateTime(startDateTime.add(duration));
-    print('Start scheduling meeting...');
-    print('id: $id');
-    print('title: $title');
-    print('startDateTime: $startDateTime');
-    print('duration: $duration');
+    print('Scheduling meeting...');
+    print('Case ID: $id');
+    print('Title: $title');
+    print('Start Time: $formattedStartTime');
+    print('End Time: $formattedEndTime');
+
     try {
-      print('Scheduling meeting...');
+      // API Headers
       var headers = {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json'
       };
-      var request = http.Request('POST', Uri.parse('https://odr.sandhee.com/api/webex/create-meeting'));
-      if (id == null || formattedStartTime == null || formattedEndTime == null || title == null) {
-        print("One or more required values are null.");
-        return;
-      }
+      var request = http.Request('POST', Uri.parse('${GlobalService.baseUrl}/api/webex/create-meeting'));
       request.body = json.encode({
-        "caseId": id ?? '',
-        "startTime": formattedStartTime??'',
-        "endTime": formattedEndTime ?? '',
-        "title": title ?? '',
+        "caseId": id.toString(),
+        "startTime": formattedStartTime,
+        "endTime": formattedEndTime,
+        "title": title
       });
       request.headers.addAll(headers);
-      print('Request body: ${request.body}');
-      _showLoadingDialog(context);
 
-      final stopwatch = Stopwatch()..start();
       http.StreamedResponse response = await request.send();
-      stopwatch.stop();
 
-      print('API call duration: ${stopwatch.elapsedMilliseconds}ms');
-      print('Response status code: ${response.statusCode}');
-
-
-      String responseBody = await response.stream.bytesToString();
-      print('Response body: $responseBody');
-
-      Navigator.of(context).pop();
-
-
-      if (response.statusCode == 200) {
-        if (responseBody.isNotEmpty) {
-          var jsonResponse = json.decode(responseBody);
-
-          if (jsonResponse['id'] != null) {
-
-            _showMessageDialog(context, 'Meeting Scheduled', 'The meeting was successfully scheduled. Meeting ID: ${jsonResponse['id']}');
-          } else {
-            _showMessageDialog(context, 'Error', 'Received unexpected response from the server.');
-          }
-        } else {
-          _showMessageDialog(context, 'Error', 'Received empty response from the server.');
-        }
-      } else {
-        print('Error: ${response.reasonPhrase}');
-        _showMessageDialog(context, 'Error', 'Failed to schedule the meeting. Response: $responseBody');
+      if (response.statusCode == 201) {
+        print(await response.stream.bytesToString());
+        print("sheduled Meeting");
+      }
+      else {
+        print("8444444444444");
+        print(response.reasonPhrase);
       }
     } catch (e) {
       print('Error: $e');
-      if (Navigator.canPop(context)) {
-        Navigator.of(context).pop();
-      }
-      if (id == null || title.isEmpty || startDateTime == null || duration == null) {
-        _showMessageDialog(context, 'Error', 'Invalid input data. Please check your inputs.');
-        return;
-      }
-      _showMessageDialog(context, 'Error', 'An error occurred while scheduling the meeting.');
+
+
+
+
     }
   }
   void _showLoadingDialog(BuildContext context) {
@@ -726,13 +741,26 @@ class _ArbitratorcasesState extends State<Arbitratorcases> {
     }
   }
 
-  void handleMeeting(Meeting meeting) {
+  void handleMeeting(Meeting meeting) async {
+    final Uri meetingUrl = Uri.parse(meeting.webLink);
 
+    if (!meetingUrl.hasScheme || !meetingUrl.isAbsolute) {
+      print('Invalid URL: ${meeting.webLink}');
+      return;
+    }
 
+    if (await canLaunchUrl(meetingUrl)) {
+      await launchUrl(
+        meetingUrl,
+        mode: LaunchMode.externalApplication,
+      );
+    } else {
+      print('Could not launch ${meeting.webLink}');
+    }
   }
 
   Future<void> handleAllMeetingCompleted(BuildContext context, String caseId) async {
-    var url = Uri.parse('http://192.168.1.22:4001/api/cases/uploadordersheet');
+    var url = Uri.parse('${GlobalService.baseUrl}/api/cases/uploadordersheet');
 
 
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -779,7 +807,7 @@ class _ArbitratorcasesState extends State<Arbitratorcases> {
           'Content-Type': 'application/json',
         };
 
-        var request = http.Request('PUT', Uri.parse('http://192.168.1.22:4001/api/cases/updatemeetstatus'));
+        var request = http.Request('PUT', Uri.parse('http://192.168.0.109:4001/api/cases/updatemeetstatus'));
 
         // Send the valid caseId to the API
         request.body = json.encode({
@@ -975,7 +1003,7 @@ class _ArbitratorcasesState extends State<Arbitratorcases> {
 
   Future<void> uploadAwardFile(File file, String id) async {
 
-    var url = Uri.parse('http://192.168.1.22:4001/api/cases/uploadawards');
+    var url = Uri.parse('http://192.168.0.109:4001/api/cases/uploadawards');
 
 
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -1027,7 +1055,7 @@ class _ArbitratorcasesState extends State<Arbitratorcases> {
 }
 Future<void> uploadOrdersheet(File file, String id) async {
 
-  var url = Uri.parse('http://192.168.1.22:4001/api/cases/uploadordersheet');
+  var url = Uri.parse('http://192.168.0.109:4001/api/cases/uploadordersheet');
 
 
   SharedPreferences prefs = await SharedPreferences.getInstance();

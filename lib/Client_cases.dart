@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:odr_sandhee/GlobalServiceurl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -88,7 +89,7 @@ class _ClientCasesState extends State<ClientCases> {
     });
 
     final url =
-        'http://192.168.1.3:4001/api/cases/clientcases?page=$_currentPage&limit=$_limit';
+        '${GlobalService.baseUrl}/api/cases/clientcases?page=$_currentPage&limit=$_limit';
     final headers = {'token': '$token'};
 
     try {
@@ -140,7 +141,7 @@ class _ClientCasesState extends State<ClientCases> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.blue[800],
+        backgroundColor: Colors.blue[900],
         title: Row(
           mainAxisAlignment: MainAxisAlignment.start,
           children: [

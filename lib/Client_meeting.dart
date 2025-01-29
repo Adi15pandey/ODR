@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:odr_sandhee/GlobalServiceurl.dart';
 import 'dart:convert';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -70,7 +71,7 @@ class _ClientMeetingState extends State<ClientMeeting> {
 
 
   Future<void> _fetchMeetings() async {
-    const String url = "http://192.168.1.3:4001/api/webex/all-meetings/client";
+     String url = "${GlobalService.baseUrl}/api/webex/all-meetings/client";
     final headers = {
       'token': '$token', // Ensure $token contains the actual token value
     };
@@ -104,7 +105,7 @@ class _ClientMeetingState extends State<ClientMeeting> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.blue[800],
+        backgroundColor: Colors.blue[900],
         title: Row(
           mainAxisAlignment: MainAxisAlignment.start,
           children: [

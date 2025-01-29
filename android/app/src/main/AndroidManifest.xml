@@ -1,6 +1,7 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest
+    xmlns:android="http://schemas.android.com/apk/res/android">
     <application
-        android:label="odr_sandhee"
+        android:label="ODR"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

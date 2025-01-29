@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:odr_sandhee/GlobalServiceurl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -44,7 +45,7 @@ class _ArbitratorDocumentState extends State<ArbitratorDocument> {
 
   Future<void> _fetchData() async {
     final response = await http.get(
-      Uri.parse('http://192.168.1.22:4001/api/cases/arbitratorcases'),
+      Uri.parse('${GlobalService.baseUrl}/api/cases/arbitratorcases'),
       headers: {'token': '$token'},
     );
 
@@ -52,7 +53,7 @@ class _ArbitratorDocumentState extends State<ArbitratorDocument> {
       final data = json.decode(response.body);
       setState(() {
         _caseData = data['caseData'];
-        _filteredCaseData = _caseData; // Initialize with the full data
+        _filteredCaseData = _caseData;
         _isLoading = false;
       });
     } else {
@@ -71,7 +72,7 @@ class _ArbitratorDocumentState extends State<ArbitratorDocument> {
       _filteredCaseData = _caseData.where((caseItem) {
         return caseItem['clientName'].toLowerCase().contains(query) ||
             caseItem['respondentName'].toLowerCase().contains(query) ||
-            caseItem['arbitratorName'].toLowerCase().contains(query); // Add more fields if necessary
+            caseItem['arbitratorName'].toLowerCase().contains(query);
       }).toList();
     });
   }
@@ -89,7 +90,7 @@ class _ArbitratorDocumentState extends State<ArbitratorDocument> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.blue[800],
+        backgroundColor: Colors.blue[900],
         title: Row(
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
@@ -216,6 +217,7 @@ class _ArbitratorDocumentState extends State<ArbitratorDocument> {
                                 return GestureDetector(
                                   onTap: () {
                                     final Uri uri = Uri.parse(attachment['url'] ?? '');
+                                    print(uri);
                                     launchUrl(uri);
                                   },
                                   child: Padding(

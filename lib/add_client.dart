@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:google_fonts/google_fonts.dart';
+import 'package:odr_sandhee/GlobalServiceurl.dart';
 
 class AddClient extends StatefulWidget {
   const AddClient({super.key});
@@ -17,25 +18,22 @@ class _AddClientState extends State<AddClient> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController addressController = TextEditingController();
   final TextEditingController aboutController = TextEditingController();
-  final TextEditingController passwordController = TextEditingController();
+
 
   @override
   void dispose() {
-    // Dispose the controllers when the widget is destroyed
     idController.dispose();
     nameController.dispose();
     contactController.dispose();
     emailController.dispose();
     addressController.dispose();
     aboutController.dispose();
-    passwordController.dispose(); // Dispose of password controller
     super.dispose();
   }
 
-  // Fetch Client ID from the API
   Future<void> fetchClientId() async {
     try {
-      var response = await http.get(Uri.parse('http://192.168.1.22:4001/api/autouid/client'));
+      var response = await http.get(Uri.parse('${GlobalService.baseUrl}/api/autouid/client'));
 
       if (response.statusCode == 200) {
         var data = json.decode(response.body);
@@ -57,32 +55,29 @@ class _AddClientState extends State<AddClient> {
     };
     var request = http.Request(
       'POST',
-      Uri.parse('http://192.168.1.22:4001/api/auth/register'),
+      Uri.parse('${GlobalService.baseUrl}/api/auth/register'),
     );
     request.body = json.encode({
       "name": nameController.text,
-      "password": passwordController.text,
       "contactNo": contactController.text,
       "emailId": emailController.text,
       "about": aboutController.text,
       "address": addressController.text,
-      "uid": idController.text, // Use client ID from the API
+      "uid": idController.text,
+      "role": "client",
     });
     request.headers.addAll(headers);
+    print(request.body);
 
     try {
       http.StreamedResponse response = await request.send();
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == 201) {
         print(await response.stream.bytesToString());
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Client registered successfully!')),
         );
       } else {
-        // print(response.reasonPhrase);
-        // ScaffoldMessenger.of(context).showSnackBar(
-        //   const SnackBar(content: Text('Failed to register client.')),
-        // );
       }
     } catch (e) {
       print("Error: $e");
@@ -95,14 +90,14 @@ class _AddClientState extends State<AddClient> {
   @override
   void initState() {
     super.initState();
-    fetchClientId(); // Fetch client ID when the screen loads
+    fetchClientId();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.blue[800],
+        backgroundColor: Colors.blue[900],
         title: Row(
           children: [
             Image.asset(
@@ -234,26 +229,25 @@ class _AddClientState extends State<AddClient> {
               const SizedBox(height: 15),
 
               // Password
-              TextField(
-                controller: passwordController,
-                obscureText: true, // Hides password input
-                decoration: InputDecoration(
-                  labelText: 'Password',
-                  labelStyle: const TextStyle(fontSize: 16, color: Colors.grey),
-                  filled: true,
-                  fillColor: Colors.grey[50],
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
+              // TextField(
+              //   controller: passwordController,
+              //   obscureText: true, // Hides password input
+              //   decoration: InputDecoration(
+              //     labelText: 'Password',
+              //     labelStyle: const TextStyle(fontSize: 16, color: Colors.grey),
+              //     filled: true,
+              //     fillColor: Colors.grey[50],
+              //     border: OutlineInputBorder(
+              //       borderRadius: BorderRadius.circular(12),
+              //     ),
+              //   ),
+              // ),
               const SizedBox(height: 25),
 
               // Save Button
               Center(
                 child: ElevatedButton(
                   onPressed: () {
-                    // Call the API to register the client
                     registerClient();
                   },
                   style: ElevatedButton.styleFrom(

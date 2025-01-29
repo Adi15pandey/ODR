@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:google_fonts/google_fonts.dart';  // Import Google Fonts package
+import 'package:google_fonts/google_fonts.dart';
+import 'package:odr_sandhee/GlobalServiceurl.dart';  // Import Google Fonts package
 
 class AdminDocuments extends StatefulWidget {
   const AdminDocuments({super.key});
@@ -27,7 +28,7 @@ class _AdminDocumentsState extends State<AdminDocuments> {
       isLoading = true;
     });
 
-    final url = 'http://192.168.1.22:4001/api/cases/all-cases?page=$page&limit=$limit';
+    final url = '${GlobalService.baseUrl}/api/cases/all-cases?page=$page&limit=$limit';
     final response = await http.get(Uri.parse(url));
 
     if (response.statusCode == 200) {
@@ -134,11 +135,25 @@ class _AdminDocumentsState extends State<AdminDocuments> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          'Admin Documents',
-          style: GoogleFonts.poppins(fontSize: 20),
+        backgroundColor: Colors.blue[900],
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            Image.asset(
+              'assets/Images/Group.png',
+              height: 30,
+            ),
+            SizedBox(width: 10),
+            Text(
+              'Documents',
+              style: GoogleFonts.poppins(
+                fontWeight: FontWeight.bold,
+                fontSize: 24,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
         ),
-        backgroundColor: Colors.blue.shade700,
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())

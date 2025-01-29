@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:google_fonts/google_fonts.dart';
+import 'package:odr_sandhee/GlobalServiceurl.dart';
 import 'package:odr_sandhee/add_arbitrator.dart';
 
 class ArbitratorAdmin extends StatefulWidget {
@@ -12,9 +13,9 @@ class ArbitratorAdmin extends StatefulWidget {
 }
 
 class _ArbitratorAdminState extends State<ArbitratorAdmin> {
-  List<dynamic> arbitrators = []; // To hold the list of arbitrators
-  bool isLoading = true; // To show a loader during data fetch
-  String? errorMessage; // Original list of arbitrators
+  List<dynamic> arbitrators = [];
+  bool isLoading = true;
+  String? errorMessage;
   List<dynamic> filteredArbitrators = []; // List for filtered arbitrators
   // To display error messages
   TextEditingController searchController = TextEditingController(); // To display error messages
@@ -26,7 +27,7 @@ class _ArbitratorAdminState extends State<ArbitratorAdmin> {
   }
 
   Future<void> fetchArbitrators() async {
-    final url = 'http://192.168.1.22:4001/api/arbitrator/all';
+    final url = '${GlobalService.baseUrl}/api/arbitrator/all';
 
     try {
       final response = await http.get(Uri.parse(url));
@@ -35,6 +36,7 @@ class _ArbitratorAdminState extends State<ArbitratorAdmin> {
         final data = json.decode(response.body);
         setState(() {
           arbitrators = data['user'] ?? [];
+          filteredArbitrators=arbitrators;
           isLoading = false;
         });
       } else {
@@ -222,7 +224,7 @@ class _ArbitratorAdminState extends State<ArbitratorAdmin> {
   // Function to make the PUT request to update the arbitrator
   Future<void> updateArbitrator(String arbitratorId,
       Map<String, dynamic> updatedArbitrator) async {
-    final url = 'http://192.168.1.22:4001/api/arbitrator/update/$arbitratorId'; // URL with dynamic ID
+    final url = '${GlobalService.baseUrl}/api/arbitrator/update/$arbitratorId'; // URL with dynamic ID
 
     try {
       final response = await http.put(
@@ -248,7 +250,7 @@ class _ArbitratorAdminState extends State<ArbitratorAdmin> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.blue[800],
+        backgroundColor: Colors.blue[900],
         title: Row(
           children: [
             Image.asset(

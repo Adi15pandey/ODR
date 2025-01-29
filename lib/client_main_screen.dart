@@ -3,23 +3,13 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:odr_sandhee/Client_allarbitrator.dart';
 import 'package:odr_sandhee/Client_cases.dart';
 import 'package:odr_sandhee/Client_meeting.dart';
+import 'package:odr_sandhee/GlobalServiceurl.dart';
 import 'package:odr_sandhee/LogoutScreen.dart';
 import 'package:odr_sandhee/arbitratorclient.dart';
 import 'package:odr_sandhee/client_document.dart';
 import 'package:odr_sandhee/tickets.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
-import 'package:flutter/material.dart';
-
-import 'package:google_fonts/google_fonts.dart';
-import 'package:odr_sandhee/Admin_client.dart';
-import 'package:odr_sandhee/LogoutScreen.dart';
-import 'package:odr_sandhee/admin_cases.dart';
-import 'package:odr_sandhee/admin_documents.dart';
-import 'package:odr_sandhee/arbitrator_admin.dart';
-import 'package:odr_sandhee/arbitratorclient.dart';
-import 'package:odr_sandhee/meeting_admin.dart';
-import 'package:odr_sandhee/tickets.dart';
 import 'dashboard_screen.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -27,8 +17,6 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fl_chart/fl_chart.dart';
 
-
-import 'dashboard_screen.dart'; // Import the DashboardScreen
 
 class ClientMainScreen extends StatefulWidget {
   const ClientMainScreen({super.key});
@@ -78,14 +66,13 @@ class _ClientMainScreenState extends State<ClientMainScreen> {
     }
   }
   Future<void> _fetchCounts() async {
-    final url = 'http://192.168.1.3:4001/api/global/client/counts';
+    final url = '${GlobalService.baseUrl}/api/global/client/counts';
 
     final headers = {
-      'token': '$token', // Ensure $token contains the actual token value
+      'token': '$token',
     };
 
     try {
-      // Making the GET request
       var request = http.Request('GET', Uri.parse(url));
       request.headers.addAll(headers);
 
@@ -120,7 +107,7 @@ class _ClientMainScreenState extends State<ClientMainScreen> {
     }
   }
   Future<void> _fetchCaseCompletedData() async {
-    final url = 'http://192.168.1.3:4001/api/cases/chartdata/client';
+    final url = '${GlobalService.baseUrl}/api/cases/chartdata/client';
 
     final headers = {
       'token': '$token',
@@ -147,7 +134,7 @@ class _ClientMainScreenState extends State<ClientMainScreen> {
     }
   }
   Future<void> _fetchMeetingData() async {
-    final url = 'http://192.168.1.3:4001/api/webex/recent-meetings/client';
+    final url = '${GlobalService.baseUrl}/api/webex/recent-meetings/client';
     final headers = {
       'token': '$token',
     };
@@ -173,7 +160,7 @@ class _ClientMainScreenState extends State<ClientMainScreen> {
     }
   }
   Future<void> _fetchRecentMeetingData() async {
-    final url = 'http://192.168.1.3:4001/api/webex/recent-fullMeetingDataWithCaseDetails'; // Your API endpoint for recent meetings
+    final url = '${GlobalService.baseUrl}/api/webex/recent-fullMeetingDataWithCaseDetails'; // Your API endpoint for recent meetings
     final headers = {
       'token': '$token',
     };
@@ -225,7 +212,7 @@ class _ClientMainScreenState extends State<ClientMainScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.blue[800],
+        backgroundColor: Colors.blue[900],
         title: Text(
           'Dashboard',
           style: GoogleFonts.poppins(
@@ -243,6 +230,10 @@ class _ClientMainScreenState extends State<ClientMainScreen> {
               DrawerHeader(
                 decoration: BoxDecoration(
                   color: Colors.blue[800],
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(30),
+                    bottomRight: Radius.circular(30),
+                  ),
                 ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -253,7 +244,7 @@ class _ClientMainScreenState extends State<ClientMainScreen> {
                     ),
                     const SizedBox(height: 10),
                     Text(
-                      '',
+                      'Welcome Back',
                       style: GoogleFonts.poppins(
                         color: Colors.white,
                         fontSize: 24,
@@ -312,16 +303,16 @@ class _ClientMainScreenState extends State<ClientMainScreen> {
                   // Navigator.pop(context);
                 },
               ),
-              _buildDrawerItem(
-                icon: Icons.width_normal,
-                text: 'Tickets',
-                onTap: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context)=> TicketsScreen()));
-
-
-                  // Navigator.pop(context);
-                },
-              ),
+              // _buildDrawerItem(
+              //   icon: Icons.width_normal,
+              //   text: 'Tickets',
+              //   onTap: () {
+              //     Navigator.push(context, MaterialPageRoute(builder: (context)=> TicketsScreen()));
+              //
+              //
+              //     // Navigator.pop(context);
+              //   },
+              // ),
               SizedBox(height: 160),
               _buildDrawerItem(
                 icon: Icons.logout,
@@ -352,7 +343,7 @@ class _ClientMainScreenState extends State<ClientMainScreen> {
                       // Navigate to a page for Arbitrations
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => ArbitratorAdmin()), // Replace with your actual page
+                        MaterialPageRoute(builder: (context) => ClientAllarbitrator()), // Replace with your actual page
                       );
                     },
                     child: _buildCountCard('Arbitrations', arbitrations),
@@ -361,12 +352,12 @@ class _ClientMainScreenState extends State<ClientMainScreen> {
                   GestureDetector(
                     onTap: () {
                       // Navigate to a page for Unique Clients
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => AdminClient()), // Replace with your actual page
-                      );
+                      // Navigator.push(
+                      //   context,
+                      //   MaterialPageRoute(builder: (context) => ClientAllarbitrator()), // Replace with your actual page
+                      // );
                     },
-                    child: _buildCountCard('Unique Clients', uniqueClients),
+                    child: _buildCountCard('Clients', uniqueClients),
                   ),
                 ],
               ),
@@ -380,10 +371,10 @@ class _ClientMainScreenState extends State<ClientMainScreen> {
                       // Navigate to the Total Cases screen when the title is tapped
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => AdminCases()),
+                        MaterialPageRoute(builder: (context) => ClientCases()),
                       );
                     },
-                    child: _buildCountCard('Total Cases', totalCases),
+                    child: _buildCountCard('Cases', totalCases),
                   ),
                   GestureDetector(
                     onTap: () {

@@ -2,20 +2,22 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:google_fonts/google_fonts.dart';
+import 'package:odr_sandhee/Admin_main_screen.dart';
 import 'package:odr_sandhee/GlobalServiceurl.dart';
 import 'package:odr_sandhee/arbitrator_main_screen.dart';
+import 'package:odr_sandhee/client_main_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class VerifyOtpArbitrator extends StatefulWidget {
+class VerifyOtpAdmin extends StatefulWidget {
   final String storedEmail;
 
-  const VerifyOtpArbitrator({super.key, required this.storedEmail});
+  const VerifyOtpAdmin({super.key, required this.storedEmail});
 
   @override
-  State<VerifyOtpArbitrator> createState() => _VerifyOtpArbitratorState();
+  State<VerifyOtpAdmin> createState() => _VerifyOtpAdminState();
 }
 
-class _VerifyOtpArbitratorState extends State<VerifyOtpArbitrator> {
+class _VerifyOtpAdminState extends State<VerifyOtpAdmin> {
   final List<TextEditingController> _emailOtpControllers =
   List.generate(4, (_) => TextEditingController());
   final List<TextEditingController> _phoneOtpControllers =
@@ -28,7 +30,7 @@ class _VerifyOtpArbitratorState extends State<VerifyOtpArbitrator> {
     return controllers.map((controller) => controller.text).join();
   }
 
-  Future<void> _verifyOtp() async   {
+  Future<void> _verifyOtp() async {
     setState(() {
       isLoading = true;
     });
@@ -57,7 +59,7 @@ class _VerifyOtpArbitratorState extends State<VerifyOtpArbitrator> {
 
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => ArbitratorMainScreen()),
+          MaterialPageRoute(builder: (context) => AdminMainScreen()),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -80,38 +82,29 @@ class _VerifyOtpArbitratorState extends State<VerifyOtpArbitrator> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: List.generate(
         controllers.length,
-            (index) => Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8.0),
-          child: SizedBox(
-            width: 50,
-            height: 60,
-            child: TextField(
-              controller: controllers[index],
-              keyboardType: TextInputType.number,
-              textAlign: TextAlign.center,
-              maxLength: 1,
-              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              decoration: InputDecoration(
-                counterText: "",
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
-                  borderSide: BorderSide(color: Colors.blue[900]!, width: 2),
-                ),
+            (index) => SizedBox(
+          width: 40,
+          height: 50,
+          child: TextField(
+            controller: controllers[index],
+            keyboardType: TextInputType.number,
+            textAlign: TextAlign.center,
+            maxLength: 1,
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            decoration: InputDecoration(
+              counterText: "",
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8.0),
               ),
-              onChanged: (value) {
-                if (value.isNotEmpty && index < controllers.length - 1) {
-                  FocusScope.of(context).nextFocus();
-                } else if (value.isEmpty && index > 0) {
-                  FocusScope.of(context).previousFocus();
-                }
-              },
             ),
+            onChanged: (value) {
+              if (value.isNotEmpty && index < controllers.length - 1) {
+                FocusScope.of(context).nextFocus();
+              }
+            },
           ),
         ),
-      ),
+      ).expand((element) => [element, SizedBox(width: 8)]).toList()..removeLast(),
     );
   }
 
@@ -128,7 +121,7 @@ class _VerifyOtpArbitratorState extends State<VerifyOtpArbitrator> {
               'assets/Images/Group.png',
               height: 30,
             ),
-            const SizedBox(width: 10),
+            SizedBox(width: 10),
             Text(
               'Verify OTP',
               style: GoogleFonts.poppins(
@@ -152,20 +145,20 @@ class _VerifyOtpArbitratorState extends State<VerifyOtpArbitrator> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Text(
+                Text(
                   'OTP from Email',
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 _buildOtpInputRow(_emailOtpControllers),
-                const SizedBox(height: 16),
-                const Text(
+                SizedBox(height: 16),
+                Text(
                   'OTP from Phone',
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 _buildOtpInputRow(_phoneOtpControllers),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: isLoading ? null : _verifyOtp,
                   style: ElevatedButton.styleFrom(

@@ -1,4 +1,4 @@
-package com.example.odr_sandhee
+package com.odr.odr_sandhee
 
 import io.flutter.embedding.android.FlutterActivity
 

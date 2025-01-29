@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:google_fonts/google_fonts.dart';
+import 'package:odr_sandhee/GlobalServiceurl.dart';
 
 class AddArbitrator extends StatefulWidget {
   const AddArbitrator({super.key});
@@ -19,7 +20,7 @@ class _AddArbitratorState extends State<AddArbitrator> {
   final TextEditingController aboutController = TextEditingController();
   final TextEditingController areaOfExpertiseController = TextEditingController();
   final TextEditingController experienceController = TextEditingController();
-  final TextEditingController passwordController = TextEditingController();
+  // final TextEditingController passwordController = TextEditingController();
 
   @override
   void dispose() {
@@ -31,14 +32,14 @@ class _AddArbitratorState extends State<AddArbitrator> {
     aboutController.dispose();
     areaOfExpertiseController.dispose();
     experienceController.dispose();
-    passwordController.dispose();
+    // passwordController.dispose();
     super.dispose();
   }
 
   // Fetch Arbitrator ID from the API
   Future<void> fetchArbitratorId() async {
     try {
-      var response = await http.get(Uri.parse('http://192.168.1.22:4001/api/autouid/arbitrator'));
+      var response = await http.get(Uri.parse('${GlobalService.baseUrl}/api/autouid/arbitrator'));
 
       if (response.statusCode == 200) {
         var data = json.decode(response.body);
@@ -58,13 +59,12 @@ class _AddArbitratorState extends State<AddArbitrator> {
     var headers = {'Content-Type': 'application/json'};
     var request = http.Request(
       'POST',
-      Uri.parse('http://192.168.1.22:4001/api/auth/register'),
+      Uri.parse('${GlobalService.baseUrl}/api/auth/register'),
     );
 
     // Adding the "role": "arbitrator" field
     request.body = json.encode({
       "name": nameController.text,
-      "password": passwordController.text,
       "contactNo": contactController.text,
       "emailId": emailController.text,
       "about": aboutController.text,
@@ -72,7 +72,7 @@ class _AddArbitratorState extends State<AddArbitrator> {
       "uid": idController.text,
       "areaOfExpertise": areaOfExpertiseController.text,
       "experience": experienceController.text,
-      "role": "arbitrator",  // New field added
+      "role": "arbitrator",
     });
 
     request.headers.addAll(headers);
@@ -119,7 +119,7 @@ class _AddArbitratorState extends State<AddArbitrator> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.blue[800],
+        backgroundColor: Colors.blue[900],
         title: Row(
           children: [
             Image.asset(
@@ -262,19 +262,19 @@ class _AddArbitratorState extends State<AddArbitrator> {
                 ),
               ),
               const SizedBox(height: 15),
-              TextField(
-                controller: passwordController,
-                obscureText: true,
-                decoration: InputDecoration(
-                  labelText: 'Password',
-                  labelStyle: const TextStyle(color: Colors.grey),
-                  filled: true,
-                  fillColor: Colors.grey[50],
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
+              // TextField(
+              //   controller: passwordController,
+              //   obscureText: true,
+              //   decoration: InputDecoration(
+              //     labelText: 'Password',
+              //     labelStyle: const TextStyle(color: Colors.grey),
+              //     filled: true,
+              //     fillColor: Colors.grey[50],
+              //     border: OutlineInputBorder(
+              //       borderRadius: BorderRadius.circular(12),
+              //     ),
+              //   ),
+              // ),
               const SizedBox(height: 25),
               Center(
                 child: ElevatedButton(
@@ -303,3 +303,89 @@ class _AddArbitratorState extends State<AddArbitrator> {
     );
   }
 }
+
+// ListTile(
+//   leading: const Icon(Icons.dashboard),
+//   title: const Text('Dashboard'),
+//   onTap: () {
+//     // Handle navigation
+//   },
+// ),
+// ExpansionTile(
+//   leading: const Icon(Icons.gavel),
+//   title: const Text('Litigation'),
+//   children: [
+//     ListTile(
+//       title: const Text('Option 1'),
+//       onTap: () {
+//         // Handle sub-option navigation
+//       },
+//     ),
+//     ListTile(
+//       title: const Text('Option 2'),
+//       onTap: () {
+//         // Handle sub-option navigation
+//       },
+//     ),
+//   ],
+// ),
+// ExpansionTile(
+//   leading: const Icon(Icons.cases),
+//   title: const Text('Sub-Cases'),
+//   children: [
+//     ListTile(
+//       title: const Text('Option 1'),
+//       onTap: () {
+//         // Handle sub-option navigation
+//       },
+//     ),
+//     ListTile(
+//       title: const Text('Option 2'),
+//       onTap: () {
+//         // Handle sub-option navigation
+//       },
+//     ),
+//   ],
+// ),
+// ExpansionTile(
+//   leading: const Icon(Icons.people),
+//   title: const Text('Users'),
+//   children: [
+//     ListTile(
+//       title: const Text('Option 1'),
+//       onTap: () {
+//         // Handle sub-option navigation
+//       },
+//     ),
+//     ListTile(
+//       title: const Text('Option 2'),
+//       onTap: () {
+//         // Handle sub-option navigation
+//       },
+//     ),
+//   ],
+// ),
+// ListTile(
+//   leading: const Icon(Icons.archive),
+//   title: const Text('Archive'),
+//   onTap: () {
+//     // Handle navigation
+//   },
+// ),
+// ListTile(
+//   leading: const Icon(Icons.calendar_today),
+//   title: const Text('Calendar'),
+//   onTap: () {
+//     // Handle navigation
+//   },
+// ),
+// const SizedBox(height: 10),
+// // Add a spacer for aesthetics or padding
+// const Divider(),
+// ListTile(
+//   leading: const Icon(Icons.settings),
+//   title: const Text('Setting'),
+//   onTap: () {
+//     // Handle navigation
+//   },
+// ),

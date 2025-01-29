@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:google_fonts/google_fonts.dart';
+import 'package:odr_sandhee/GlobalServiceurl.dart';
 import 'package:odr_sandhee/add_client.dart';
 
 class AdminClient extends StatefulWidget {
@@ -23,12 +24,11 @@ class _AdminClientState extends State<AdminClient> {
     fetchClients();
     searchController.addListener(_filterClients);
   }
-
   String clientUid = '';
 
   Future<void> fetchClientUid() async {
     final response = await http.get(
-        Uri.parse('http://192.168.1.22:4001/api//autouid/client'));
+        Uri.parse('${GlobalService.baseUrl}/api//autouid/client'));
 
     if (response.statusCode == 200) {
       var data = json.decode(response.body);
@@ -44,7 +44,7 @@ class _AdminClientState extends State<AdminClient> {
 
 
   Future<void> fetchClients() async {
-    const String url = "http://192.168.1.22:4001/api/client/all";
+     String url = "${GlobalService.baseUrl}/api/client/all";
     try {
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
@@ -85,7 +85,7 @@ class _AdminClientState extends State<AdminClient> {
 
   Future<void> updateClient(String id, String name, String contactNo,
       String email, bool status) async {
-    final String url = "http://192.168.1.22:4001/api/client/update/$id";
+    final String url = "${GlobalService.baseUrl}/api/client/update/$id";
     try {
       final response = await http.put(
         Uri.parse(url),
@@ -265,7 +265,7 @@ class _AdminClientState extends State<AdminClient> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.blue[800],
+        backgroundColor: Colors.blue[900],
         title: Row(
           children: [
             Image.asset(

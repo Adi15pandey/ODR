@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
+import 'package:odr_sandhee/GlobalServiceurl.dart';
 import 'package:odr_sandhee/LogoutScreen.dart';
 import 'package:odr_sandhee/Respondend_cases.dart';
 import 'package:odr_sandhee/Respondent_meeting.dart';
@@ -57,7 +58,7 @@ class _RespondendMainScreenState extends State<RespondendMainScreen> {
   }
 
   Future<void> _fetchCaseCompletedData() async {
-    final url = 'http://192.168.1.3:4001/api/cases/chartdata/respondent';
+    final url = '${GlobalService.baseUrl}/api/cases/chartdata/respondent';
 
     final headers = {
       'token': '$token',
@@ -84,7 +85,7 @@ class _RespondendMainScreenState extends State<RespondendMainScreen> {
     }
   }
   Future<void> _fetchMeetingData() async {
-    final url = 'http://192.168.1.3:4001/api/webex/recent-meetings/respondent';
+    final url = '${GlobalService.baseUrl}/api/webex/recent-meetings/respondent';
     final headers = {
       'token': '$token',
     };
@@ -110,7 +111,7 @@ class _RespondendMainScreenState extends State<RespondendMainScreen> {
     }
   }
   Future<void> _fetchRecentMeetingData() async {
-    final url = 'http://192.168.1.3:4001/api/webex/recent-fullMeetingDataWithCaseDetails/respondent'; // Your API endpoint for recent meetings
+    final url = '${GlobalService.baseUrl}/api/webex/recent-fullMeetingDataWithCaseDetails/respondent'; // Your API endpoint for recent meetings
     final headers = {
       'token': '$token',
     };
@@ -159,7 +160,7 @@ class _RespondendMainScreenState extends State<RespondendMainScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.blue[800],
+        backgroundColor: Colors.blue[900],
         title: Row(
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
@@ -248,14 +249,14 @@ class _RespondendMainScreenState extends State<RespondendMainScreen> {
                   // Navigator.pop(context);
                 },
               ),
-              _buildDrawerItem(
-                icon: Icons.width_normal,
-                text: 'Tickets',
-                onTap: () {
-                  Navigator.push(context,
-                      MaterialPageRoute(builder: (context) => TicketsScreen()));
-                },
-              ),
+              // _buildDrawerItem(
+              //   icon: Icons.width_normal,
+              //   text: 'Tickets',
+              //   onTap: () {
+              //     Navigator.push(context,
+              //         MaterialPageRoute(builder: (context) => TicketsScreen()));
+              //   },
+              // ),
               Spacer(),
               _buildDrawerItem(
                 icon: Icons.logout,

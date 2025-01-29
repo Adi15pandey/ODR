@@ -2,6 +2,9 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:google_fonts/google_fonts.dart';
+import 'package:odr_sandhee/Addcaseviafile.dart';
+import 'package:odr_sandhee/Filedetailupload.dart';
+import 'package:odr_sandhee/GlobalServiceurl.dart';
 
 class AdminCases extends StatefulWidget {
   const AdminCases({Key? key}) : super(key: key);
@@ -25,7 +28,7 @@ class _AdminCasesState extends State<AdminCases> {
 
   Future<void> fetchCases(int page, int limit) async {
     final String apiUrl =
-        'http://192.168.1.22:4001/api/cases/all-cases?page=$page&limit=$limit';
+        '${GlobalService.baseUrl}/api/cases/all-cases?page=$page&limit=$limit';
     try {
       final response = await http.get(Uri.parse(apiUrl));
 
@@ -48,19 +51,19 @@ class _AdminCasesState extends State<AdminCases> {
   }
 
   Future<void> assignArbitrator({
-    required String caseId,  // caseId is displayed on the UI
+    required String caseId, // caseId is displayed on the UI
     required String arbitratorName,
     required String arbitratorId,
     required String arbitratorEmail,
   }) async {
-    final String apiUrl = 'http://192.168.1.22:4001/api/arbitratorappointandnotifyall';
+    final String apiUrl = '${GlobalService.baseUrl}/api/arbitratorappointandnotifyall';
     final headers = {'Content-Type': 'application/json'};
 
     try {
       // Create the request as per your example
       var request = http.Request('POST', Uri.parse(apiUrl));
       request.body = json.encode({
-        "id": caseId,  // Sending caseId in the request
+        "id": caseId, // Sending caseId in the request
         "arbitratorName": arbitratorName,
         "arbitratorId": arbitratorId,
         "arbitratorEmail": arbitratorEmail,
@@ -77,16 +80,20 @@ class _AdminCasesState extends State<AdminCases> {
         final responseData = json.decode(responseBody);
 
         // Handling the response message
-        if (responseData['message'] == 'Arbitrator Appointed and Notification sent successfully') {
+        if (responseData['message'] ==
+            'Arbitrator Appointed and Notification sent successfully') {
           setState(() {
-            // Update the cases data based on response
             cases = cases.map((caseItem) {
               // Compare with _id from the response
               if (caseItem['id'] == responseData['updatedCases']['_id']) {
-                caseItem['arbitratorName'] = responseData['updatedCases']['arbitratorName'];
-                caseItem['arbitratorId'] = responseData['updatedCases']['arbitratorId'];
-                caseItem['arbitratorEmail'] = responseData['updatedCases']['arbitratorEmail'];
-                caseItem['isArbitratorAssigned'] = responseData['updatedCases']['isArbitratorAssigned'];
+                caseItem['arbitratorName'] =
+                responseData['updatedCases']['arbitratorName'];
+                caseItem['arbitratorId'] =
+                responseData['updatedCases']['arbitratorId'];
+                caseItem['arbitratorEmail'] =
+                responseData['updatedCases']['arbitratorEmail'];
+                caseItem['isArbitratorAssigned'] =
+                responseData['updatedCases']['isArbitratorAssigned'];
               }
               return caseItem;
             }).toList();
@@ -98,16 +105,17 @@ class _AdminCasesState extends State<AdminCases> {
           );
         } else {
           // If the response message is unexpected
-          throw Exception('Unexpected API response: ${responseData['message']}');
+          throw Exception(
+              'Unexpected API response: ${responseData['message']}');
         }
       } else {
         final responseBody = await response.stream.bytesToString();
         print('Error response status: ${response.statusCode}');
         print('Error response body: $responseBody');
-        throw Exception('Failed to assign arbitrator. Status code: ${response.statusCode}');
+        throw Exception(
+            'Failed to assign arbitrator. Status code: ${response.statusCode}');
       }
     } catch (error) {
-      // Catch and display any errors
       print('Error: $error');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: $error')),
@@ -116,14 +124,11 @@ class _AdminCasesState extends State<AdminCases> {
   }
 
 
-
-
-
-
-  Future<void> showAssignArbitratorDialog(BuildContext context, String caseId) async {
+  Future<void> showAssignArbitratorDialog(BuildContext context,
+      String caseId) async {
     // Function to fetch arbitrators from the API
     Future<List<Map<String, dynamic>>> fetchArbitrators() async {
-      const String apiUrl = 'http://192.168.1.22:4001/api/arbitrator/all';
+       String apiUrl = '${GlobalService.baseUrl}/api/arbitrator/all';
       final response = await http.get(Uri.parse(apiUrl));
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -134,7 +139,8 @@ class _AdminCasesState extends State<AdminCases> {
         });
 
         return (data['user'] as List)
-            .map((arbitrator) => {
+            .map((arbitrator) =>
+        {
           "id": arbitrator['_id'],
           "name": arbitrator['name'],
           "email": arbitrator['emailId'],
@@ -143,7 +149,8 @@ class _AdminCasesState extends State<AdminCases> {
         })
             .toList();
       } else {
-        print('Failed to fetch arbitrators: ${response.statusCode} - ${response.body}');
+        print('Failed to fetch arbitrators: ${response.statusCode} - ${response
+            .body}');
         throw Exception('Failed to fetch arbitrators');
       }
     }
@@ -199,14 +206,17 @@ class _AdminCasesState extends State<AdminCases> {
                     TextField(
                       decoration: InputDecoration(
                         hintText: 'Search arbitrators...',
-                        prefixIcon: const Icon(Icons.search, color: Colors.blueAccent),
+                        prefixIcon: const Icon(Icons.search, color: Colors
+                            .blueAccent),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Colors.blueAccent),
+                          borderSide: const BorderSide(
+                              color: Colors.blueAccent),
                         ),
                         filled: true,
                         fillColor: Colors.grey[100],
-                        contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                        contentPadding: const EdgeInsets.symmetric(
+                            vertical: 12),
                       ),
                       onChanged: (value) {
                         setState(() {
@@ -232,7 +242,8 @@ class _AdminCasesState extends State<AdminCases> {
                     const SizedBox(height: 20),
                     Expanded(
                       child: SingleChildScrollView(
-                        scrollDirection: Axis.horizontal, // Enable horizontal scrolling
+                        scrollDirection: Axis.horizontal,
+                        // Enable horizontal scrolling
                         child: DataTable(
                           columnSpacing: 20,
                           headingTextStyle: const TextStyle(
@@ -319,7 +330,8 @@ class _AdminCasesState extends State<AdminCases> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8.0),
                     ),
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24, vertical: 12),
                   ),
                   child: const Text('Appoint'),
                 ),
@@ -342,11 +354,10 @@ class _AdminCasesState extends State<AdminCases> {
     }
   }
 
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.blue[800],
+        backgroundColor: Colors.blue[900],
         title: Row(
           children: [
             Image.asset(
@@ -365,119 +376,182 @@ class _AdminCasesState extends State<AdminCases> {
           ],
         ),
       ),
-
-      body: cases.isEmpty && isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : NotificationListener<ScrollNotification>(
-        onNotification: (scrollInfo) {
-          if (scrollInfo.metrics.pixels ==
-              scrollInfo.metrics.maxScrollExtent &&
-              !isLoading) {
-            loadMore();
-          }
-          return false;
-        },
-        child: ListView.builder(
-          itemCount: cases.length + (isLastPage ? 0 : 1),
-          itemBuilder: (context, index) {
-            if (index == cases.length) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            final caseItem = cases[index];
-            return Card(
-              margin: const EdgeInsets.all(12.0),
-              elevation: 4, // Adds a shadow for depth
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12.0),
+      body: Padding(
+        padding: const EdgeInsets.all(8.0), // Padding around the entire body
+        child: Column(
+          children: [
+            // Horizontal buttons section
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16.0),
+              // Added space below buttons
+              child: Row(
+                children: [
+                  // Add Case via File button
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.push(context, MaterialPageRoute(builder: (context)=> AddCaseForm()));
+                        // Action for Add Case via File button
+                      },
+                      child: Text('Add Case via File'),
+                      style: ElevatedButton.styleFrom(
+                        padding: EdgeInsets.symmetric(vertical: 16),
+                        // primary: Colors.blueAccent,
+                        // onPrimary: Colors.white,
+                        backgroundColor: Colors.blue[500],
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8.0),
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 16), // Space between buttons
+                  // File Upload button
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.push(context, MaterialPageRoute(builder: (context)=>FileDetailsDialog()));
+                        // Action for File Upload button
+                      },
+                      child: Text('File Upload'),
+                      style: ElevatedButton.styleFrom(
+                        padding: EdgeInsets.symmetric(vertical: 16),
+                        backgroundColor: Colors.blue[500],
+                        // primary: Colors.blueAccent,
+                        // onPrimary: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8.0),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.blue[50], // Light blue background
-                  borderRadius: BorderRadius.circular(12.0),
-                ),
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Client Name: ${caseItem['clientName']}',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.blueAccent,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Client Mobile: ${caseItem['clientMobile']}',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Respondent Name: ${caseItem['respondentName']}',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Dispute Type: ${caseItem['disputeType']}',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'File Attachment: ${caseItem['fileName'] ?? 'No attachment'}',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            'Arbitrator: ${caseItem['arbitratorName'] ?? 'Not assigned'}',
-                            style: const TextStyle(
-                              fontSize: 14,
-                              color: Colors.black87,
-                            ),
+            ),
+            // Checking if data is empty or loading
+            if (cases.isEmpty && isLoading)
+              const Center(child: CircularProgressIndicator())
+            else
+            // ListView displaying the cases
+              Expanded(
+                child: NotificationListener<ScrollNotification>(
+                  onNotification: (scrollInfo) {
+                    if (scrollInfo.metrics.pixels ==
+                        scrollInfo.metrics.maxScrollExtent && !isLoading) {
+                      loadMore();
+                    }
+                    return false;
+                  },
+                  child: ListView.builder(
+                    itemCount: cases.length + (isLastPage ? 0 : 1),
+                    itemBuilder: (context, index) {
+                      if (index == cases.length) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      final caseItem = cases[index];
+                      return Card(
+                        margin: const EdgeInsets.all(12.0),
+                        elevation: 4,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.0),
+                        ),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.blue[50], // Light blue background
+                            borderRadius: BorderRadius.circular(12.0),
+                          ),
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Client Name: ${caseItem['clientName']}',
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.blueAccent,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Client Mobile: ${caseItem['clientMobile']}',
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Respondent Name: ${caseItem['respondentName']}',
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Dispute Type: ${caseItem['disputeType']}',
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'File Attachment: ${caseItem['fileName'] ??
+                                    'No attachment'}',
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment
+                                    .spaceBetween,
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      'Arbitrator: ${caseItem['arbitratorName'] ??
+                                          'Not assigned'}',
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.black87,
+                                      ),
+                                    ),
+                                  ),
+                                  if (caseItem['isArbitratorAssigned'] == false)
+                                    ElevatedButton.icon(
+                                      onPressed: () {
+                                        showAssignArbitratorDialog(
+                                            context, caseItem['_id']);
+                                      },
+                                      icon: const Icon(
+                                          Icons.person_add, size: 18),
+                                      label: const Text(
+                                        'Assign',
+                                        style: TextStyle(fontSize: 14),
+                                      ),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.blueAccent,
+                                        foregroundColor: Colors.white,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                              8.0),
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ],
                           ),
                         ),
-                        if (caseItem['isArbitratorAssigned'] == false)
-                          ElevatedButton.icon(
-                            onPressed: () {
-                              showAssignArbitratorDialog(context, caseItem['_id']);
-                            },
-                            icon: const Icon(Icons.person_add, size: 18),
-                            label: const Text(
-                              'Assign',
-                              style: TextStyle(fontSize: 14),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.blueAccent,
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8.0),
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ],
+                      );
+                    },
+                  ),
                 ),
               ),
-            );
-
-          },
+          ],
         ),
       ),
     );

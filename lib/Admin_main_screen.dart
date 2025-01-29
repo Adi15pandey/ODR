@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:google_fonts/google_fonts.dart';
 import 'package:odr_sandhee/Admin_client.dart';
+import 'package:odr_sandhee/GlobalServiceurl.dart';
 import 'package:odr_sandhee/LogoutScreen.dart';
 import 'package:odr_sandhee/admin_cases.dart';
 import 'package:odr_sandhee/admin_documents.dart';
@@ -66,7 +67,7 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
   }
 
   Future<void> _fetchCounts() async {
-    final url = 'http://192.168.1.22:4001/api/global/counts';
+    final url = '${GlobalService.baseUrl}/api/global/counts';
 
     final headers = {
       'token': '$token', // Ensure $token contains the actual token value
@@ -107,7 +108,7 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
 
 
   Future<void> _fetchCaseCompletedData() async {
-    final url = 'http://192.168.1.22:4001/api/cases/chartdata/client';
+    final url = '${GlobalService.baseUrl}/api/cases/chartdata/client';
 
     final headers = {
       'token': '$token',
@@ -135,7 +136,7 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
   }
 
   Future<void> _fetchMeetingData() async {
-    final url = 'http://192.168.1.22:4001/api/webex/recent-meetings';
+    final url = '${GlobalService.baseUrl}/api/webex/recent-meetings';
     final headers = {
       'token': '$token',
     };
@@ -162,7 +163,7 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
   }
 
   Future<void> _fetchRecentMeetingData() async {
-    final url = 'http://192.168.1.22:4001/api/webex/recent-fullMeetingDataWithCaseDetails'; // Your API endpoint for recent meetings
+    final url = '${GlobalService.baseUrl}/api/webex/recent-fullMeetingDataWithCaseDetails'; // Your API endpoint for recent meetings
     final headers = {
       'token': '$token',
     };
@@ -213,7 +214,7 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.blue[800],
+        backgroundColor: Colors.blue[900],
         title: Row(
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
@@ -241,7 +242,11 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
             children: <Widget>[
               DrawerHeader(
                 decoration: BoxDecoration(
-                  color: Colors.blue[800],
+                  color: Colors.blue[900],
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(30),
+                    bottomRight: Radius.circular(30),
+                  ),
                 ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -252,7 +257,7 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
                     ),
                     const SizedBox(height: 10),
                     Text(
-                      '',
+                      'Welcome Back',
                       style: GoogleFonts.poppins(
                         color: Colors.white,
                         fontSize: 24,
@@ -273,7 +278,7 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
                 },
               ),
               ExpansionTile(
-                leading: Icon(Icons.people_rounded, color: Colors.blue[800]),
+                leading: Icon(Icons.people_rounded, color: Colors.blue[900]),
                 title: Text(
                   'User',
                   style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600),
@@ -321,13 +326,13 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
                   // Navigator.pop(context);
                 },
               ),
-              _buildDrawerItem(
-                icon: Icons.width_normal,
-                text: 'Tickets',
-                onTap: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => TicketsScreen()));
-                },
-              ),
+              // _buildDrawerItem(
+              //   icon: Icons.width_normal,
+              //   text: 'Tickets',
+              //   onTap: () {
+              //     Navigator.push(context, MaterialPageRoute(builder: (context) => TicketsScreen()));
+              //   },
+              // ),
               SizedBox(height: 160),
               _buildDrawerItem(
                 icon: Icons.logout,
@@ -431,7 +436,7 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
               style: GoogleFonts.poppins(
                 fontWeight: FontWeight.bold,
                 fontSize: 16,
-                color: Colors.blue[800],
+                color: Colors.blue[900],
               ),
             ),
             SizedBox(height: 10),

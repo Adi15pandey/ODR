@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
+import 'package:odr_sandhee/GlobalServiceurl.dart';
 import 'package:odr_sandhee/LogoutScreen.dart';
 import 'package:odr_sandhee/arbitrator_Document.dart';
 import 'package:odr_sandhee/arbitratorcases.dart';
@@ -63,7 +64,7 @@ class _ArbitratorMainScreenState extends State<ArbitratorMainScreen> {
   }
 
   Future<void> _fetchCounts() async {
-    final url = 'http://192.168.1.22:4001/api/global/arbitrator/counts';
+    final url = '${GlobalService.baseUrl}/api/global/arbitrator/counts';
 
     final headers = {
       'token': '$token',
@@ -97,7 +98,7 @@ class _ArbitratorMainScreenState extends State<ArbitratorMainScreen> {
   }
 
   Future<void> _fetchCaseCompletedData() async {
-    final url = 'http://192.168.1.22:4001/api/cases/chartdata/arbitrator';
+    final url = '${GlobalService.baseUrl}/api/cases/chartdata/arbitrator';
 
     final headers = {
       'token': '$token',
@@ -125,7 +126,7 @@ class _ArbitratorMainScreenState extends State<ArbitratorMainScreen> {
   }
 
   Future<void> _fetchMeetingData() async {
-    final url = 'http://192.168.1.22:4001/api/webex/recent-meetings/arbitrator';
+    final url = '${GlobalService.baseUrl}/api/webex/recent-meetings/arbitrator';
     final headers = {
       'token': '$token',
     };
@@ -152,7 +153,7 @@ class _ArbitratorMainScreenState extends State<ArbitratorMainScreen> {
   }
 
   Future<void> _fetchRecentMeetingData() async {
-    final url = 'http://192.168.1.22:4001/api/webex/recent-fullMeetingDataWithCaseDetails/arbitrator'; // Your API endpoint for recent meetings
+    final url = '${GlobalService.baseUrl}/api/webex/recent-fullMeetingDataWithCaseDetails/arbitrator'; // Your API endpoint for recent meetings
     final headers = {
       'token': '$token',
     };
@@ -204,7 +205,7 @@ class _ArbitratorMainScreenState extends State<ArbitratorMainScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.blue[800],
+        backgroundColor: Colors.blue[900],
         title: Row(
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
@@ -231,7 +232,7 @@ class _ArbitratorMainScreenState extends State<ArbitratorMainScreen> {
             children: <Widget>[
               DrawerHeader(
                 decoration: BoxDecoration(
-                  color: Colors.blue[800],
+                  color: Colors.blue[900],
                   borderRadius: BorderRadius.only(
                     bottomLeft: Radius.circular(30),
                     bottomRight: Radius.circular(30),
@@ -293,14 +294,14 @@ class _ArbitratorMainScreenState extends State<ArbitratorMainScreen> {
                   // Navigator.pop(context);
                 },
               ),
-              _buildDrawerItem(
-                icon: Icons.width_normal,
-                text: 'Tickets',
-                onTap: () {
-                  Navigator.push(context,
-                      MaterialPageRoute(builder: (context) => TicketsScreen()));
-                },
-              ),
+              // _buildDrawerItem(
+              //   icon: Icons.width_normal,
+              //   text: 'Tickets',
+              //   onTap: () {
+              //     Navigator.push(context,
+              //         MaterialPageRoute(builder: (context) => TicketsScreen()));
+              //   },
+              // ),
               Spacer(),
               _buildDrawerItem(
                 icon: Icons.logout,

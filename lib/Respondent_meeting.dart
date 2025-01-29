@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:odr_sandhee/GlobalServiceurl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class RespondentMeeting extends StatefulWidget {
@@ -45,8 +46,8 @@ class _RespondentMeetingState extends State<RespondentMeeting> {
 
   Future<void> fetchMeetings() async {
 
-    const url =
-        'http://192.168.1.3:4001/api/webex/all-meetings/respondent'; // API endpoint
+    final url =
+        '${GlobalService.baseUrl}/api/webex/all-meetings/respondent'; // API endpoint
     final headers = {
       'token': '$token',
     };
@@ -86,7 +87,7 @@ class _RespondentMeetingState extends State<RespondentMeeting> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.blue[800],
+        backgroundColor: Colors.blue[900],
         title: Row(
           mainAxisAlignment: MainAxisAlignment.start,
           children: [

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:odr_sandhee/GlobalServiceurl.dart';
 
 class ClientAllarbitrator extends StatefulWidget {
   const ClientAllarbitrator({super.key});
@@ -31,7 +32,7 @@ class _ClientAllarbitratorState extends State<ClientAllarbitrator> {
     });
     try {
       final url =
-          'http://192.168.1.3:4001/api/arbitrator/all?page=$currentPage&limit=$pageLimit';
+          '${GlobalService.baseUrl}/api/arbitrator/all?page=$currentPage&limit=$pageLimit';
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -169,7 +170,7 @@ class _ClientAllarbitratorState extends State<ClientAllarbitrator> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.blue[800],
+        backgroundColor: Colors.blue[900],
         title: Row(
           mainAxisAlignment: MainAxisAlignment.start,
           children: [

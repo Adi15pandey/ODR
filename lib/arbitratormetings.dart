@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:odr_sandhee/GlobalServiceurl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -45,7 +46,7 @@ class _ArbitratormetingsState extends State<Arbitratormetings> {
 
 
   Future<void> _fetchMeetingData() async {
-    final url = 'http://192.168.1.22:4001/api/webex/all-meetings/arbitrator';
+    final url = '${GlobalService.baseUrl}/api/webex/all-meetings/arbitrator';
     final headers = {'token': '$token'};
 
     try {
@@ -307,7 +308,7 @@ class _ArbitratormetingsState extends State<Arbitratormetings> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.blue[800],
+        backgroundColor: Colors.blue[900],
         title: Row(
           mainAxisAlignment: MainAxisAlignment.start,
           children: [

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:odr_sandhee/GlobalServiceurl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -46,7 +47,7 @@ class _RespondendCasesState extends State<RespondendCases> {
 
 
   Future<void> _fetchCases() async {
-    final url = 'http://192.168.1.3:4001/api/cases/allrespondentcases';
+    final url = '${GlobalService.baseUrl}/api/cases/allrespondentcases';
 
     try {
       final headers = {
@@ -81,7 +82,7 @@ class _RespondendCasesState extends State<RespondendCases> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.blue[800],
+        backgroundColor: Colors.blue[900],
         title: Row(
           mainAxisAlignment: MainAxisAlignment.start,
           children: [

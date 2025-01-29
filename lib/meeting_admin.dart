@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:odr_sandhee/GlobalServiceurl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';// Import the intl package
@@ -24,7 +25,7 @@ class _MeetingAdminState extends State<MeetingAdmin> {
 
   // Fetch meetings from the API
   Future<void> fetchMeetings() async {
-    final String apiUrl = 'http://192.168.1.22:4001/api/webex/all-meetings';
+    final String apiUrl = '${GlobalService.baseUrl}/api/webex/all-meetings';
     try {
       final response = await http.get(Uri.parse(apiUrl));
 
@@ -35,6 +36,8 @@ class _MeetingAdminState extends State<MeetingAdmin> {
           isLoading = false;
         });
       } else {
+
+
         throw Exception('Failed to load meetings');
       }
     } catch (error) {
@@ -81,7 +84,7 @@ class _MeetingAdminState extends State<MeetingAdmin> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.blue[800],
+        backgroundColor: Colors.blue[900],
         title: Row(
           children: [
             Image.asset(
